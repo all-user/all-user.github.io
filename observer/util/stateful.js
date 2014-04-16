@@ -27,12 +27,6 @@ var stateful = {
     for (type in statusObj) {
       status = statusObj[type];
 
-      //test code--
-      if (!state.hasOwnProperty(type)) {
-        console.log("state don't have " + type);
-        console.log(state);
-      }
-      //--test code
       if (
          state.hasOwnProperty(type) && state[type] !== status ||
         !state.hasOwnProperty(type) && marge

@@ -7,7 +7,7 @@ var publisher = {
   on: function (type, fn, context) {
     type = type || "any";
     fn   = typeof fn === "function" ? fn : context[fn];
-    
+
     if (typeof this._subscribers[type] === "undefined") {
       this._subscribers[type] = [];
     }
@@ -20,9 +20,6 @@ var publisher = {
   },
 
   fire: function (type, publication) {
-    //test code--
-    console.log(type + " is fired");
-    //--test code
     this.visitSubscribers("publish", type, publication);
   },
 
@@ -31,7 +28,7 @@ var publisher = {
         subscribers = this._subscribers[pubtype],
         max         = subscribers ? subscribers.length : 0,
         i;
-    
+
     for (i = 0; i < max; i += 1) {
       if (action === "publish") {
         try {
@@ -49,8 +46,8 @@ var publisher = {
     }
 
   }
-  
-  
+
+
 };
 
 function makePublisher (o) {
