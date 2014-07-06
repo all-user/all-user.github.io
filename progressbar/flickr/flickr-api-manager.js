@@ -95,7 +95,7 @@ var flickrApiManager = {
     if (options.format === "json" && options.noJsonCallback) {
       uri += "&nojsoncallback=1";
     }
-    return "http://api.flickr.com/services/rest/?method=flickr.photos.search&" + uri;
+    return "https://api.flickr.com/services/rest/?method=flickr.photos.search&" + uri;
   },
 
   genPhotosURLArr: function (json) {
