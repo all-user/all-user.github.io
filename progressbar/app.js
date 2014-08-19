@@ -1,4 +1,94 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var flickrApiManager, photosModel;
+
+window.watch = function() {};
+
+flickrApiManager = require('../flickr/flickr-api-manager');
+
+photosModel = require('../photos/photos-model');
+
+document.addEventListener('DOMContentLoaded', function() {
+  var inputView, mediator, progressbarModel, progressbarView, renderer;
+  inputView = require('../input/input-view');
+  require('../photos/photos-router');
+  progressbarModel = require('../progressbar/progressbar-model');
+  progressbarView = require('../progressbar/progressbar-view');
+  require('../progressbar/progressbar-router');
+  renderer = require('../renderer/renderer');
+  require('../renderer/renderer-router');
+  mediator = {
+    store: {},
+    setDenomiPhotosLength: function(urlArr) {
+      return progressbarModel.setDenominator(urlArr.length);
+    },
+    checkCanQuit: function() {
+      var bool;
+      bool = !flickrApiManager.getState('waiting') && photosModel.getState('completed');
+      return progressbarModel.changeState({
+        canQuit: bool
+      });
+    },
+    decideFlowSpeed: function() {
+      var speed;
+      speed = progressbarView.getState('full') ? 'fast' : flickrApiManager.getState('waiting') ? 'slow' : 'middle';
+      return progressbarModel.setFlowSpeed(speed);
+    },
+    handleFading: function(statusObj) {
+      var action;
+      action = statusObj.fading;
+      switch (action) {
+        case 'stop':
+          return renderer.deleteUpdater(this.store.fadingUpdater);
+        default:
+          this.store.fadingUpdater = progressbarView.fadingUpdate;
+          return renderer.addUpdater(this.store.fadingUpdater);
+      }
+    },
+    handleButtonClick: function() {
+      progressbarModel.run();
+      photosModel.clear();
+      progressbarModel.resque();
+      flickrApiManager.setAPIOptions(inputView.getOptions());
+      photosModel.setProperties({
+        maxConcurrentRequest: inputView.getMaxConcurrentRequest()
+      });
+      return flickrApiManager.sendRequestJSONP();
+    },
+    handleCanselClick: function() {
+      photosModel.clearUnloaded();
+      if (flickrApiManager.getState('waiting')) {
+        flickrApiManager.changeState({
+          'waiting': false
+        });
+        progressbarModel.fadeOut();
+      }
+      if (progressbarModel.getState("failed")) {
+        return progressbarModel.fadeOut();
+      }
+    },
+    handelRequestFailed: function(e) {
+      return progressbarModel.failed();
+    }
+  };
+  flickrApiManager.on('urlready', 'initPhotos', photosModel);
+  flickrApiManager.on("apirequestfailed", "failed", progressbarModel);
+  inputView.on('canselclick', 'handleCanselClick', mediator);
+  flickrApiManager.on('urlready', 'setDenomiPhotosLength', mediator);
+  photosModel.on('clearunloaded', 'setDenominator', progressbarModel);
+  photosModel.on('loadedincreased', 'setNumerator', progressbarModel);
+  flickrApiManager.on('waitingchange', 'checkCanQuit', mediator);
+  photosModel.on('completedchange', 'checkCanQuit', mediator);
+  flickrApiManager.on('waitingchange', 'decideFlowSpeed', mediator);
+  photosModel.on('clear', 'clear', progressbarModel);
+  progressbarView.on('fullchange', 'decideFlowSpeed', mediator);
+  progressbarModel.on('fadingchange', 'handleFading', mediator);
+  progressbarModel.on('run', 'draw', renderer);
+  progressbarModel.on('stop', 'pause', renderer);
+  return inputView.on('searchclick', 'handleButtonClick', mediator);
+});
+
+
+},{"../flickr/flickr-api-manager":2,"../input/input-view":3,"../photos/photos-model":4,"../photos/photos-router":5,"../progressbar/progressbar-model":8,"../progressbar/progressbar-router":9,"../progressbar/progressbar-view":10,"../renderer/renderer":12,"../renderer/renderer-router":11}],2:[function(require,module,exports){
 var flickrApiManager, makePublisher, makeStateful,
   __hasProp = {}.hasOwnProperty;
 
@@ -74,6 +164,12 @@ flickrApiManager = {
     this.validateOptions();
     newScript.id = 'kick-api';
     newScript.src = this.genURI(this.apiOptions);
+    newScript.onerror = (function(_this) {
+      return function(e) {
+        _this._state.waiting = false;
+        return _this.fire("apirequestfailed", e);
+      };
+    })(this);
     if (oldScript != null) {
       document.body.replaceChild(newScript, oldScript);
     } else {
@@ -108,11 +204,13 @@ flickrApiManager = {
     return _results;
   },
   handleAPIResponse: function(json) {
-    this.changeState({
-      'waiting': false
-    });
-    this.fire('apiresponse', json);
-    return this.fire('urlready', this.genPhotosURLArr(json));
+    if (this.getState('waiting')) {
+      this.changeState({
+        'waiting': false
+      });
+      this.fire('apiresponse', json);
+      return this.fire('urlready', this.genPhotosURLArr(json));
+    }
   }
 };
 
@@ -127,7 +225,7 @@ jsonFlickrApi.on('apiresponse', 'handleAPIResponse', flickrApiManager);
 module.exports = flickrApiManager;
 
 
-},{"../util/publisher":13,"../util/stateful":14}],2:[function(require,module,exports){
+},{"../util/publisher":13,"../util/stateful":14}],3:[function(require,module,exports){
 var inputView, makePublisher, makeStateful,
   __hasProp = {}.hasOwnProperty;
 
@@ -212,78 +310,7 @@ inputView.changeState({
 module.exports = inputView;
 
 
-},{"../util/publisher":13,"../util/stateful":14}],3:[function(require,module,exports){
-var flickrApiManager, photosModel;
-
-flickrApiManager = require('../flickr/flickr-api-manager');
-
-photosModel = require('../photos/photos-model');
-
-document.addEventListener('DOMContentLoaded', function() {
-  var inputView, mediator, progressbarModel, progressbarView, renderer;
-  inputView = require('../input/input-view');
-  require('../photos/photos-router');
-  progressbarModel = require('../progressbar/progressbar-model');
-  progressbarView = require('../progressbar/progressbar-view');
-  require('../progressbar/progressbar-router');
-  renderer = require('../renderer/renderer');
-  require('../renderer/renderer-router');
-  mediator = {
-    store: {},
-    setDenomiPhotosLength: function(urlArr) {
-      return progressbarModel.setDenominator(urlArr.length);
-    },
-    checkCanQuit: function() {
-      var bool;
-      bool = !flickrApiManager.getState('waiting') && photosModel.getState('completed');
-      return progressbarModel.changeState({
-        canQuit: bool
-      });
-    },
-    decideFlowSpeed: function() {
-      var speed;
-      speed = progressbarView.getState('full') ? 'fast' : flickrApiManager.getState('waiting') ? 'slow' : 'middle';
-      return progressbarModel.setFlowSpeed(speed);
-    },
-    handleFading: function(statusObj) {
-      var action;
-      action = statusObj.fading;
-      switch (action) {
-        case 'stop':
-          return renderer.deleteUpdater(this.store.fadingUpdater);
-        default:
-          this.store.fadingUpdater = progressbarView.fadingUpdate;
-          return renderer.addUpdater(this.store.fadingUpdater);
-      }
-    },
-    handleButtonClick: function() {
-      progressbarModel.run();
-      photosModel.clear();
-      flickrApiManager.setAPIOptions(inputView.getOptions());
-      photosModel.setProperties({
-        maxConcurrentRequest: inputView.getMaxConcurrentRequest()
-      });
-      return flickrApiManager.sendRequestJSONP();
-    }
-  };
-  flickrApiManager.on('urlready', 'initPhotos', photosModel);
-  inputView.on('canselclick', 'clearUnloaded', photosModel);
-  flickrApiManager.on('urlready', 'setDenomiPhotosLength', mediator);
-  photosModel.on('clearunloaded', 'setDenominator', progressbarModel);
-  photosModel.on('loadedincreased', 'setNumerator', progressbarModel);
-  flickrApiManager.on('waitingchange', 'checkCanQuit', mediator);
-  photosModel.on('completedchange', 'checkCanQuit', mediator);
-  flickrApiManager.on('waitingchange', 'decideFlowSpeed', mediator);
-  photosModel.on('clear', 'clear', progressbarModel);
-  progressbarView.on('fullchange', 'decideFlowSpeed', mediator);
-  progressbarModel.on('fadingchange', 'handleFading', mediator);
-  progressbarModel.on('run', 'draw', renderer);
-  progressbarModel.on('stop', 'pause', renderer);
-  return inputView.on('searchclick', 'handleButtonClick', mediator);
-});
-
-
-},{"../flickr/flickr-api-manager":1,"../input/input-view":2,"../photos/photos-model":4,"../photos/photos-router":5,"../progressbar/progressbar-model":8,"../progressbar/progressbar-router":9,"../progressbar/progressbar-view":10,"../renderer/renderer":12,"../renderer/renderer-router":11}],4:[function(require,module,exports){
+},{"../util/publisher":13,"../util/stateful":14}],4:[function(require,module,exports){
 var makePublisher, makeStateful, photosModel,
   __hasProp = {}.hasOwnProperty;
 
@@ -568,6 +595,7 @@ progressbarModel = {
   _state: {
     hidden: true,
     fading: 'stop',
+    failed: false,
     flowSpeed: 'slow',
     denominator: 0,
     numerator: 0,
@@ -618,6 +646,16 @@ progressbarModel = {
   fadeStop: function() {
     return this.changeState({
       fading: 'stop'
+    });
+  },
+  failed: function() {
+    return this.changeState({
+      failed: true
+    });
+  },
+  resque: function() {
+    return this.changeState({
+      failed: false
     });
   },
   setFlowSpeed: function(speed) {
@@ -671,11 +709,13 @@ module.exports = progressbarModel;
 
 
 },{"../util/publisher":13,"../util/stateful":14}],9:[function(require,module,exports){
-var mediator, progressbarModel, progressbarView;
+var mediator, progressbarModel, progressbarView, renderer;
 
 progressbarModel = require('./progressbar-model');
 
 progressbarView = require('./progressbar-view');
+
+renderer = require("./../renderer/renderer");
 
 mediator = {
   handleRendered: function() {
@@ -692,7 +732,17 @@ mediator = {
     progressbarModel.changeState({
       hidden: true
     });
+    progressbarModel.resque();
     return progressbarModel.stop();
+  },
+  handleFailedChange: function() {
+    if (progressbarModel.getState("failed")) {
+      progressbarView.el.arrowBox.style.display = progressbarView.el.progress.style.display = "none";
+      return progressbarView.showFailedMsg();
+    } else {
+      progressbarView.el.arrowBox.style.display = progressbarView.el.progress.style.display = "block";
+      return progressbarView.hideFailedMsg();
+    }
   }
 };
 
@@ -712,10 +762,12 @@ progressbarView.changeState({
 
 progressbarModel.on('fadingchange', 'fadeInOut', progressbarView);
 
+progressbarModel.on("failedchange", "handleFailedChange", mediator);
+
 progressbarView.on('hide', 'initProgressbar', progressbarView);
 
 
-},{"./progressbar-model":8,"./progressbar-view":10}],10:[function(require,module,exports){
+},{"./../renderer/renderer":12,"./progressbar-model":8,"./progressbar-view":10}],10:[function(require,module,exports){
 var makePublisher, makeStateful, progressbarView;
 
 makePublisher = require('../util/publisher');
@@ -728,7 +780,8 @@ progressbarView = {
     background: document.getElementById('background-window'),
     arrowBox: document.getElementById('arrow-box'),
     tiles: document.getElementsByClassName('arrow-tile'),
-    progress: document.getElementById('progress-bar')
+    progress: document.getElementById('progress-bar'),
+    failedMsg: document.getElementById('failed-msg')
   },
   _state: {
     full: false,
@@ -816,6 +869,7 @@ progressbarView = {
     return this.progressbarUpdate = (function(_this) {
       return function() {
         var v, _i, _len;
+        watch(progressbar);
         if (++frame % 2 === 0) {
           for (_i = 0, _len = tiles.length; _i < _len; _i++) {
             v = tiles[_i];
@@ -892,9 +946,17 @@ progressbarView = {
     }
     return this.makeFadingUpdate();
   },
+  showFailedMsg: function() {
+    return this.el.failedMsg.style.display = "block";
+  },
+  hideFailedMsg: function() {
+    return this.el.failedMsg.style.display = "none";
+  },
   _displayChange: function(prop) {
     this.el.gaugeBox.style.display = this.el.background.style.display = prop;
-    return this.fire('hide', null);
+    if (prop === "none") {
+      return this.fire('hide', null);
+    }
   }
 };
 
@@ -1157,4 +1219,4 @@ module.exports = function(o) {
 };
 
 
-},{}]},{},[3])
+},{}]},{},[1]);
