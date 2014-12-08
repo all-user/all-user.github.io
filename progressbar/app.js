@@ -1,7 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var flickrApiManager, photosModel;
 
-window.watch = function() {};
+window.ltWatch = require('../util/ltWatch');
 
 flickrApiManager = require('../flickr/flickr-api-manager');
 
@@ -65,9 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (progressbarModel.getState("failed")) {
         return progressbarModel.fadeOut();
       }
-    },
-    handelRequestFailed: function(e) {
-      return progressbarModel.failed();
     }
   };
   flickrApiManager.on('urlready', 'initPhotos', photosModel);
@@ -88,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-},{"../flickr/flickr-api-manager":2,"../input/input-view":3,"../photos/photos-model":4,"../photos/photos-router":5,"../progressbar/progressbar-model":8,"../progressbar/progressbar-router":9,"../progressbar/progressbar-view":10,"../renderer/renderer":12,"../renderer/renderer-router":11}],2:[function(require,module,exports){
+},{"../flickr/flickr-api-manager":2,"../input/input-view":3,"../photos/photos-model":4,"../photos/photos-router":5,"../progressbar/progressbar-model":8,"../progressbar/progressbar-router":9,"../progressbar/progressbar-view":10,"../renderer/renderer":12,"../renderer/renderer-router":11,"../util/ltWatch":14}],2:[function(require,module,exports){
 var flickrApiManager, makePublisher, makeStateful,
   __hasProp = {}.hasOwnProperty;
 
@@ -225,7 +222,7 @@ jsonFlickrApi.on('apiresponse', 'handleAPIResponse', flickrApiManager);
 module.exports = flickrApiManager;
 
 
-},{"../util/publisher":13,"../util/stateful":14}],3:[function(require,module,exports){
+},{"../util/publisher":15,"../util/stateful":16}],3:[function(require,module,exports){
 var inputView, makePublisher, makeStateful,
   __hasProp = {}.hasOwnProperty;
 
@@ -310,7 +307,7 @@ inputView.changeState({
 module.exports = inputView;
 
 
-},{"../util/publisher":13,"../util/stateful":14}],4:[function(require,module,exports){
+},{"../util/publisher":15,"../util/stateful":16}],4:[function(require,module,exports){
 var makePublisher, makeStateful, photosModel,
   __hasProp = {}.hasOwnProperty;
 
@@ -466,7 +463,7 @@ makeStateful(photosModel);
 module.exports = photosModel;
 
 
-},{"../util/publisher":13,"../util/stateful":14}],5:[function(require,module,exports){
+},{"../util/publisher":15,"../util/stateful":16}],5:[function(require,module,exports){
 var mediator, photosModel, photosView, preloader;
 
 photosModel = require('./photos-model');
@@ -584,7 +581,7 @@ makePublisher(preloader);
 module.exports = preloader;
 
 
-},{"../util/publisher":13}],8:[function(require,module,exports){
+},{"../util/publisher":15}],8:[function(require,module,exports){
 var makePublisher, makeStateful, progressbarModel;
 
 makePublisher = require('../util/publisher');
@@ -695,7 +692,7 @@ progressbarModel = {
     var res;
     res = this._state.numerator / this._state.denominator;
     if (this.processType.hasOwnProperty(process)) {
-      Math[this.processType[process]](res);
+      res = Math[this.processType[process]](res);
     }
     return res;
   }
@@ -708,7 +705,7 @@ makeStateful(progressbarModel);
 module.exports = progressbarModel;
 
 
-},{"../util/publisher":13,"../util/stateful":14}],9:[function(require,module,exports){
+},{"../util/publisher":15,"../util/stateful":16}],9:[function(require,module,exports){
 var mediator, progressbarModel, progressbarView, renderer;
 
 progressbarModel = require('./progressbar-model');
@@ -738,6 +735,7 @@ mediator = {
   handleFailedChange: function() {
     if (progressbarModel.getState("failed")) {
       progressbarView.el.arrowBox.style.display = progressbarView.el.progress.style.display = "none";
+      renderer.deleteUpdater(progressbarView.progressbarUpdate);
       return progressbarView.showFailedMsg();
     } else {
       progressbarView.el.arrowBox.style.display = progressbarView.el.progress.style.display = "block";
@@ -768,18 +766,23 @@ progressbarView.on('hide', 'initProgressbar', progressbarView);
 
 
 },{"./../renderer/renderer":12,"./progressbar-model":8,"./progressbar-view":10}],10:[function(require,module,exports){
-var makePublisher, makeStateful, progressbarView;
+var DHTMLSprite, baseFPS, makePublisher, makeStateful, progressbarView, renderer;
 
 makePublisher = require('../util/publisher');
 
 makeStateful = require('../util/stateful');
+
+DHTMLSprite = require('../util/DHTMLSprite');
+
+renderer = require('../renderer/renderer');
+
+baseFPS = renderer.targetFPS;
 
 progressbarView = {
   el: {
     gaugeBox: document.getElementById('gauge-box'),
     background: document.getElementById('background-window'),
     arrowBox: document.getElementById('arrow-box'),
-    tiles: document.getElementsByClassName('arrow-tile'),
     progress: document.getElementById('progress-bar'),
     failedMsg: document.getElementById('failed-msg')
   },
@@ -793,18 +796,19 @@ progressbarView = {
     middle: 4,
     fast: 8
   },
-  framerate: 16,
+  framerate: renderer.framerate,
   progressbar: {
-    currentSprite: 0,
     passingWidth: 0,
     recentWidth: 0,
     countTime: 0,
     settings: {
       durationTime: 1500,
       easing: 'easeOutExpo',
-      tileSize: {
-        width: 100,
-        heigth: 20
+      targetFPS: {
+        tile: 20,
+        slide: 30,
+        bar: 60,
+        ratio: 1.2
       }
     }
   },
@@ -840,21 +844,49 @@ progressbarView = {
   initDisplay: function() {
     return this.display.countTime = 0;
   },
+  spriteTile: function(options) {
+    var index, sprite, x, y;
+    x = options.x, y = options.y;
+    index = 0;
+    sprite = DHTMLSprite(options);
+    sprite.draw(x, y);
+    sprite.update = function(tCoeff) {
+      index += tCoeff;
+      index %= 28;
+      return sprite.changeImage(index | 0);
+    };
+    return sprite;
+  },
   progressbarUpdate: function() {},
   makeProgressbarUpdate: function() {
-    var arrowboxStyle, duration, easing, frame, framerate, model, progressbar, progressbarStyle, settings, tileHeight, tileWidth, tiles, _genPosition, _renderRatio;
+    var arrowboxStyle, barCoeff, duration, easing, framerate, model, progressbar, progressbarStyle, ratioCoeff, settings, slideCoeff, slideCounter, tileCoeff, tiles, updateCounter, _renderRatio;
     model = this._state.model;
     framerate = this.framerate;
     progressbar = this.progressbar;
     settings = progressbar.settings;
-    tileWidth = settings.tileSize.width;
-    tileHeight = settings.tileSize.heigth;
-    duration = settings.durationTime / framerate | 0;
+    duration = settings.durationTime / (1000 / settings.targetFPS.bar) | 0;
     easing = this.easing[settings.easing];
-    tiles = this.el.tiles;
+    tiles = [0, 100, 200, 300, 400, 500].map((function(_this) {
+      return function(pos) {
+        return _this.spriteTile({
+          x: pos,
+          y: 0,
+          width: 100,
+          height: 20,
+          imagesWidth: 400,
+          drawTarget: _this.el.arrowBox,
+          images: './images/arrow.png'
+        });
+      };
+    })(this));
     progressbarStyle = this.el.progress.style;
     arrowboxStyle = this.el.arrowBox.style;
-    frame = 0;
+    tileCoeff = settings.targetFPS.tile / baseFPS;
+    slideCoeff = settings.targetFPS.slide / baseFPS;
+    barCoeff = settings.targetFPS.bar / baseFPS;
+    ratioCoeff = settings.targetFPS.ratio / baseFPS;
+    updateCounter = 0;
+    slideCounter = 0;
     _renderRatio = (function(_this) {
       return function() {
         progressbar.countTime = 0;
@@ -863,21 +895,16 @@ progressbarView = {
         return _this.fire('ratiorendered', null);
       };
     })(this);
-    _genPosition = function(current) {
-      return "" + (current % 4 * -tileWidth) + "px " + ((current / 4 | 0) * -tileHeight) + "px";
-    };
     return this.progressbarUpdate = (function(_this) {
-      return function() {
-        var v, _i, _len;
-        watch(progressbar);
-        if (++frame % 2 === 0) {
-          for (_i = 0, _len = tiles.length; _i < _len; _i++) {
-            v = tiles[_i];
-            v.style.backgroundPosition = _genPosition(progressbar.currentSprite);
-          }
-          progressbar.currentSprite = ++progressbar.currentSprite % 28;
+      return function(tCoeff) {
+        var tile, _i, _len, _tileCoeff;
+        _tileCoeff = tCoeff * tileCoeff;
+        for (_i = 0, _len = tiles.length; _i < _len; _i++) {
+          tile = tiles[_i];
+          tile.update(_tileCoeff);
         }
-        if (frame % 50 === 0) {
+        updateCounter += tCoeff * ratioCoeff;
+        if (updateCounter > 1) {
           if (model.canRenderRatio) {
             _renderRatio();
           }
@@ -888,10 +915,12 @@ progressbarView = {
           }
         }
         if (progressbar.countTime <= duration) {
-          progressbarStyle.width = easing(progressbar.countTime++, progressbar.passingWidth, progressbar.recentWidth - progressbar.passingWidth, duration) + '%';
+          progressbar.countTime += tCoeff * barCoeff;
+          progressbarStyle.width = easing(progressbar.countTime, progressbar.passingWidth, progressbar.recentWidth - progressbar.passingWidth + 1 | 0, duration) + '%';
         }
-        frame %= 100;
-        return arrowboxStyle.left = "" + (frame * _this.speed[model.flowSpeed] % 100 - 100) + "px";
+        slideCounter += tCoeff * slideCoeff;
+        arrowboxStyle.left = "" + (slideCounter * _this.speed[model.flowSpeed] % 100 - 100) + "px";
+        return updateCounter %= 1;
       };
     })(this);
   },
@@ -967,7 +996,7 @@ makeStateful(progressbarView);
 module.exports = progressbarView;
 
 
-},{"../util/publisher":13,"../util/stateful":14}],11:[function(require,module,exports){
+},{"../renderer/renderer":12,"../util/DHTMLSprite":13,"../util/publisher":15,"../util/stateful":16}],11:[function(require,module,exports){
 var progressbarView, renderer;
 
 renderer = require('./renderer');
@@ -978,15 +1007,18 @@ renderer.addUpdater(progressbarView.makeProgressbarUpdate());
 
 
 },{"../progressbar/progressbar-view":10,"./renderer":12}],12:[function(require,module,exports){
-var makePublisher, makeStateful, renderer;
+var makePublisher, makeStateful, renderer, timeInfo;
 
 makePublisher = require('../util/publisher');
 
 makeStateful = require('../util/stateful');
 
+timeInfo = require('../util/timeInfo');
+
 renderer = {
   updaters: [],
   framerate: 16,
+  targetFPS: 60,
   timerID: null,
   _state: {
     running: false,
@@ -1033,18 +1065,21 @@ renderer = {
     updaters = this.updaters;
     return this.draw = (function(_this) {
       return function() {
+        var coeffTimer;
         if (_this._state.running) {
           return;
         }
+        coeffTimer = timeInfo(_this.targetFPS);
         _this.changeState({
           running: true
         });
         return _this.timerID = setInterval(function() {
-          var e, i, v, _i, _len;
+          var e, i, info, v, _i, _len;
+          info = coeffTimer.getInfo();
           for (i = _i = 0, _len = updaters.length; _i < _len; i = ++_i) {
             v = updaters[i];
             try {
-              v();
+              v(info.coefficient);
             } catch (_error) {
               e = _error;
               try {
@@ -1085,7 +1120,55 @@ makeStateful(renderer);
 module.exports = renderer;
 
 
-},{"../util/publisher":13,"../util/stateful":14}],13:[function(require,module,exports){
+},{"../util/publisher":15,"../util/stateful":16,"../util/timeInfo":17}],13:[function(require,module,exports){
+var DHTMLSprite;
+
+DHTMLSprite = function(options) {
+  var eleStyle, element, height, imagesWidth, sprite, width;
+  width = options.width, height = options.height, imagesWidth = options.imagesWidth;
+  element = document.createElement('div');
+  options.drawTarget.appendChild(element);
+  eleStyle = element.style;
+  element.style.position = 'absolute';
+  element.style.width = "" + width + "px";
+  element.style.height = "" + height + "px";
+  element.style.backgroundImage = "url(" + options.images + ")";
+  return sprite = {
+    draw: function(x, y) {
+      eleStyle.left = "" + x + "px";
+      return eleStyle.top = "" + y + "px";
+    },
+    changeImage: function(index) {
+      var hOffset, vOffset;
+      index *= width;
+      vOffset = -(index / imagesWidth | 0) * height;
+      hOffset = -index % imagesWidth;
+      return eleStyle.backgroundPosition = "" + hOffset + "px " + vOffset + "px";
+    },
+    show: function() {
+      return eleStyle.display = 'block';
+    },
+    hide: function() {
+      return eleStyle.display = 'none';
+    },
+    destroy: function() {
+      return eleStyle.remove();
+    }
+  };
+};
+
+module.exports = DHTMLSprite;
+
+
+},{}],14:[function(require,module,exports){
+window.ltWatch = function(arg) {
+  return arg;
+};
+
+module.exports = ltWatch;
+
+
+},{}],15:[function(require,module,exports){
 var publisher,
   __hasProp = {}.hasOwnProperty;
 
@@ -1160,7 +1243,7 @@ module.exports = function(o) {
 };
 
 
-},{}],14:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var stateful,
   __hasProp = {}.hasOwnProperty;
 
@@ -1217,6 +1300,55 @@ module.exports = function(o) {
   }
   return o._state = o._state || {};
 };
+
+
+},{}],17:[function(require,module,exports){
+var timeInfo;
+
+timeInfo = function(goalFPS) {
+  var interCount, oldTime, paused, totalCoefficient, totalFPS;
+  oldTime = 0;
+  paused = true;
+  interCount = 0;
+  totalFPS = 0;
+  totalCoefficient = 0;
+  return {
+    getInfo: function() {
+      var FPS, coefficient, elapsed, newTime;
+      if (paused === true) {
+        paused = false;
+        oldTime = Date.now();
+        return {
+          elapsed: 0,
+          coefficient: 0,
+          FPS: 0,
+          averageFPS: 0,
+          averageCoefficient: 0
+        };
+      }
+      newTime = Date.now();
+      elapsed = newTime - oldTime;
+      oldTime = newTime;
+      FPS = 1000 / elapsed;
+      interCount++;
+      totalFPS += FPS;
+      coefficient = goalFPS / FPS;
+      totalCoefficient += coefficient;
+      return {
+        elapsed: elapsed,
+        coefficient: coefficient,
+        FPS: FPS,
+        averageFPS: totalFPS / interCount,
+        averageCoefficient: totalCoefficient / interCount
+      };
+    },
+    pause: function() {
+      return paused = true;
+    }
+  };
+};
+
+module.exports = timeInfo;
 
 
 },{}]},{},[1]);
