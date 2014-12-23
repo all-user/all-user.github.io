@@ -68,8 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
   flickrApiManager.on('urlready', 'initPhotos', photosModel);
-  flickrApiManager.on("apirequestfailed", "failed", progressbarModel);
   inputView.on('canselclick', 'handleCanselClick', mediator);
+  flickrApiManager.on("apirequestfailed", "failed", progressbarModel);
   flickrApiManager.on('urlready', 'setDenomiPhotosLength', mediator);
   photosModel.on('clearunloaded', 'setDenominator', progressbarModel);
   photosModel.on('loadedincreased', 'setNumerator', progressbarModel);
@@ -766,17 +766,13 @@ progressbarView.on('hide', 'initProgressbar', progressbarView);
 
 
 },{"./../renderer/renderer":12,"./progressbar-model":8,"./progressbar-view":10}],10:[function(require,module,exports){
-var DHTMLSprite, baseFPS, makePublisher, makeStateful, progressbarView, renderer;
+var DHTMLSprite, makePublisher, makeStateful, progressbarView;
 
 makePublisher = require('../util/publisher');
 
 makeStateful = require('../util/stateful');
 
 DHTMLSprite = require('../util/DHTMLSprite');
-
-renderer = require('../renderer/renderer');
-
-baseFPS = renderer.targetFPS;
 
 progressbarView = {
   el: {
@@ -796,28 +792,29 @@ progressbarView = {
     middle: 4,
     fast: 8
   },
-  framerate: renderer.framerate,
+  globalFPS: null,
   progressbar: {
     passingWidth: 0,
     recentWidth: 0,
     countTime: 0,
     settings: {
-      durationTime: 1500,
+      durationTime: 1200,
       easing: 'easeOutExpo',
       targetFPS: {
         tile: 20,
         slide: 30,
-        bar: 60,
         ratio: 1.2
-      }
+      },
+      resolutionFPS: null
     }
   },
   display: {
     opacity: 0,
     countTime: 0,
     settings: {
-      durationTime: 200,
-      easing: 'easeOutSine'
+      durationTime: 500,
+      easing: 'easeOutSine',
+      resolutionFPS: null
     }
   },
   easing: {
@@ -831,6 +828,9 @@ progressbarView = {
         return c * (-Math.pow(2, -10 * t / d) + 1) + b;
       }
     }
+  },
+  setGlobalFPS: function(FPS) {
+    return this.globalFPS = FPS;
   },
   initProgressbar: function() {
     this.progressbar.countTime = 0;
@@ -859,12 +859,14 @@ progressbarView = {
   },
   progressbarUpdate: function() {},
   makeProgressbarUpdate: function() {
-    var arrowboxStyle, barCoeff, duration, easing, framerate, model, progressbar, progressbarStyle, ratioCoeff, settings, slideCoeff, slideCounter, tileCoeff, tiles, updateCounter, _renderRatio;
+    var arrowboxStyle, duration, easing, model, progressbar, progressbarStyle, ratioCoeff, resolutionFramerate, settings, slideCoeff, slideCounter, tileCoeff, tiles, updateCounter, _renderRatio, _throttle;
+    if (this.globalFPS === null) {
+      throw new Error('Must define globalFPS.');
+    }
     model = this._state.model;
-    framerate = this.framerate;
     progressbar = this.progressbar;
     settings = progressbar.settings;
-    duration = settings.durationTime / (1000 / settings.targetFPS.bar) | 0;
+    duration = settings.durationTime / (1000 / this.globalFPS);
     easing = this.easing[settings.easing];
     tiles = [0, 100, 200, 300, 400, 500].map((function(_this) {
       return function(pos) {
@@ -881,10 +883,9 @@ progressbarView = {
     })(this));
     progressbarStyle = this.el.progress.style;
     arrowboxStyle = this.el.arrowBox.style;
-    tileCoeff = settings.targetFPS.tile / baseFPS;
-    slideCoeff = settings.targetFPS.slide / baseFPS;
-    barCoeff = settings.targetFPS.bar / baseFPS;
-    ratioCoeff = settings.targetFPS.ratio / baseFPS;
+    tileCoeff = settings.targetFPS.tile / this.globalFPS;
+    slideCoeff = settings.targetFPS.slide / this.globalFPS;
+    ratioCoeff = settings.targetFPS.ratio / this.globalFPS;
     updateCounter = 0;
     slideCounter = 0;
     _renderRatio = (function(_this) {
@@ -895,6 +896,11 @@ progressbarView = {
         return _this.fire('ratiorendered', null);
       };
     })(this);
+    _throttle = settings.resolutionFPS === null ? function(countTime) {
+      return countTime;
+    } : (resolutionFramerate = this.globalFPS / settings.resolutionFPS, function(countTime) {
+      return countTime - (countTime % resolutionFramerate);
+    });
     return this.progressbarUpdate = (function(_this) {
       return function(tCoeff) {
         var tile, _i, _len, _tileCoeff;
@@ -915,8 +921,8 @@ progressbarView = {
           }
         }
         if (progressbar.countTime <= duration) {
-          progressbar.countTime += tCoeff * barCoeff;
-          progressbarStyle.width = easing(progressbar.countTime, progressbar.passingWidth, progressbar.recentWidth - progressbar.passingWidth + 1 | 0, duration) + '%';
+          progressbar.countTime += tCoeff;
+          progressbarStyle.width = easing(_throttle(progressbar.countTime), progressbar.passingWidth, progressbar.recentWidth - progressbar.passingWidth + 1 | 0, duration) + '%';
         }
         slideCounter += tCoeff * slideCoeff;
         arrowboxStyle.left = "" + (slideCounter * _this.speed[model.flowSpeed] % 100 - 100) + "px";
@@ -926,16 +932,19 @@ progressbarView = {
   },
   fadingUpdate: function() {},
   makeFadingUpdate: function() {
-    var backgroundStyle, display, duration, easing, frame, framerate, gaugeboxStyle, model, settings;
+    var backgroundStyle, display, duration, easing, gaugeboxStyle, model, resolutionFramerate, settings, _throttle;
     model = this._state.model;
-    framerate = this.framerate;
     display = this.display;
     settings = display.settings;
-    duration = settings.durationTime / framerate | 0;
+    duration = settings.durationTime / (1000 / this.globalFPS);
     easing = this.easing[settings.easing];
     gaugeboxStyle = this.el.gaugeBox.style;
     backgroundStyle = this.el.background.style;
-    frame = 0;
+    _throttle = settings.resolutionFPS === null ? function(countTime) {
+      return countTime;
+    } : (resolutionFramerate = this.globalFPS / settings.resolutionFPS, function(countTime) {
+      return countTime - (countTime % resolutionFramerate);
+    });
     this.makeFadingUpdate = (function(_this) {
       return function() {
         var currentOpacity, targetOpacity, type;
@@ -950,8 +959,8 @@ progressbarView = {
           case 'out':
             targetOpacity = 0;
         }
-        return _this.fadingUpdate = function() {
-          display.opacity = easing(display.countTime, currentOpacity, targetOpacity - currentOpacity, duration);
+        return _this.fadingUpdate = function(tCoeff) {
+          display.opacity = easing(_throttle(display.countTime), currentOpacity, targetOpacity - currentOpacity, duration);
           gaugeboxStyle.opacity = display.opacity * 0.5;
           backgroundStyle.opacity = display.opacity * 0.8;
           if (display.countTime >= duration) {
@@ -963,7 +972,7 @@ progressbarView = {
             _this.initDisplay();
             return;
           }
-          return display.countTime++;
+          return display.countTime += tCoeff;
         };
       };
     })(this);
@@ -996,12 +1005,14 @@ makeStateful(progressbarView);
 module.exports = progressbarView;
 
 
-},{"../renderer/renderer":12,"../util/DHTMLSprite":13,"../util/publisher":15,"../util/stateful":16}],11:[function(require,module,exports){
+},{"../util/DHTMLSprite":13,"../util/publisher":15,"../util/stateful":16}],11:[function(require,module,exports){
 var progressbarView, renderer;
 
 renderer = require('./renderer');
 
 progressbarView = require('../progressbar/progressbar-view');
+
+progressbarView.setGlobalFPS(renderer.targetFPS);
 
 renderer.addUpdater(progressbarView.makeProgressbarUpdate());
 
