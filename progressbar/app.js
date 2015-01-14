@@ -735,7 +735,6 @@ mediator = {
   handleFailedChange: function() {
     if (progressbarModel.getState("failed")) {
       progressbarView.el.arrowBox.style.display = progressbarView.el.progress.style.display = "none";
-      renderer.deleteUpdater(progressbarView.progressbarUpdate);
       return progressbarView.showFailedMsg();
     } else {
       progressbarView.el.arrowBox.style.display = progressbarView.el.progress.style.display = "block";
@@ -914,7 +913,7 @@ progressbarView = {
           if (model.canRenderRatio) {
             _renderRatio();
           }
-          if (model.canQuit && (+progressbarStyle.width.replace('%', '')) >= 100) {
+          if (model.canQuit && (+progressbarStyle.width.replace('%', '')) >= 99.9) {
             _this.changeState({
               full: true
             });
@@ -922,7 +921,7 @@ progressbarView = {
         }
         if (progressbar.countTime <= duration) {
           progressbar.countTime += tCoeff;
-          progressbarStyle.width = easing(_throttle(progressbar.countTime), progressbar.passingWidth, progressbar.recentWidth - progressbar.passingWidth + 1 | 0, duration) + '%';
+          progressbarStyle.width = easing(_throttle(progressbar.countTime), progressbar.passingWidth, progressbar.recentWidth - progressbar.passingWidth, duration) + '%';
         }
         slideCounter += tCoeff * slideCoeff;
         arrowboxStyle.left = "" + (slideCounter * _this.speed[model.flowSpeed] % 100 - 100) + "px";
