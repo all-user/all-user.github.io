@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">(function() {
+  var ET, RoomMirror, appendCSS, byAnnotation, defaultConfig, extend, hilight;
+
+  if (window.CodeMirror == null) {
+    window.CodeMirror = require(&#39;codemirror&#39;);
+  }
+
+  ET = require(&#39;evaluable-tag&#39;);
+
+  appendCSS = require(&#39;append-css&#39;);
+
+  extend = require(&#39;extend&#39;);
+
+  defaultConfig = {
+    viewportMargin: Infinity,
+    readOnly: true
+  };
+
+  appendCSS(&quot;.RoomMirror {\n  height: auto;\n}&quot;);
+
+  hilight = function(et) {
+    var config;
+    config = extend({}, defaultConfig, this.preset, et.result, {
+      value: et.annotated.textContent
+    });
+    return CodeMirror(function(editor) {
+      editor.classList.add(&#39;RoomMirror&#39;);
+      return et.annotated.parentNode.replaceChild(editor, et.annotated);
+    }, config);
+  };
+
+  byAnnotation = function(qs) {
+    var et, evaluated, i, len, results;
+    evaluated = ET.evalAnnotationsBy(qs);
+    results = [];
+    for (i = 0, len = evaluated.length; i &lt; len; i++) {
+      et = evaluated[i];
+      if (et.annotated != null) {
+        results.push((hilight.bind(this))(et));
+      } else {
+        results.push(null);
+      }
+    }
+    return results;
+  };
+
+
+<span id='RoomMirror'>  /**
+</span>  * @class RoomMirror
+  * HTML内の任意の要素に`CodeMirror`を使用したシンタックスハイライトを行う&lt;br&gt;
+  * `data-eval`の文字列がevalで評価され、デフォルトの設定とマージされた後`CodeMirror`に渡される&lt;br&gt;
+  *
+  * html
+  *
+  *     &lt;pre class=&quot;rm&quot; data-eval=&quot;{ mode:&#39;javascript&#39; }&quot;&gt;&lt;code&gt;
+  *     var test = &#39;test&#39;;
+  *     &lt;/code&gt;&lt;/pre&gt;
+  *
+  * javascript
+  *
+  *     var codeBlocks = RoomMirror(&#39;.rm&#39;);
+  *
+  * @param {String} qs  String for querySelector
+  * @return {CodeMirror}
+   */
+
+  RoomMirror = function(qs) {
+    var et, evaluated, i, len, results;
+    evaluated = ET.evalBy(qs);
+    results = [];
+    for (i = 0, len = evaluated.length; i &lt; len; i++) {
+      et = evaluated[i];
+      results.push((hilight.bind(RoomMirror))(et));
+    }
+    return results;
+  };
+
+  extend(RoomMirror, {
+
+<span id='RoomMirror-cfg-preset'>    /**
+</span>    * @cfg {Object} preset
+    * コードブロックの共通の設定を指定する&lt;br&gt;
+    * デフォルトの設定とマージされた後`CodeMirror`に渡される&lt;br&gt;
+    *
+    *     RoomMirror.preset = {
+    *         mode : &#39;javascript&#39;,
+    *         theme: &#39;monokai&#39;
+    *     };
+    *
+    *     // var defaultConfig = {
+    *     //     readOnly      : true,
+    *     //     viewportMargin: Infinity
+    *     // };
+    *
+    * シンタックスハイライトとして使う場合は言語とカラースキームの指定程度で大丈夫&lt;br&gt;
+    * 下に主なオブションを挙げる。他にも`CodeMirror`の[**Configuration**](http://codemirror.net/doc/manual.html#config)を参照
+    * @cfg {Boolean} [preset.readOnly=true]
+    * コードブロックを編集可能にしたい場合は`false`に指定&lt;br&gt;
+    * `false`を指定することでエディタとして使うことも可能
+    * @cfg {Number} [preset.viewportMargin=Infinity]
+    * コードブロックの高さを行数で指定する&lt;br&gt;
+    * この値を`Infinity`に設定し、CSSで`.RoomMirror { height: auto; }`を指定すると&lt;br&gt;
+    * コードブロックの内容に応じて行数が調整される&lt;br&gt;
+    * デフォルトではこの設定になっている
+    * @cfg {Integer} [preset.tabSize=4]
+    * タブのサイズを指定する
+    * @cfg {Boolean} [preset.lineWrapping=false]
+    * 一行が長い時、はみ出た部分のコードを折り返すかどうかを指定する&lt;br&gt;
+    * デフォルトでは`false`に指定されており、はみ出た部分はスクロールで表示する
+    * @cfg {Boolean} [preset.lineNumbers=false]
+    * 左側に行番号を表示するかどうかを指定する
+    * @cfg {Integer} [preset.firstLineNumber=1]
+    * `lineNumbers`を`true`に設定した時、行番号がいくつから始まるかを指定する&lt;br&gt;
+    * デフォルトでは`1`になっている
+    * @cfg {(Integer) -&gt; String} [preset.lineNumberFormatter]
+    * `lineNumbers`を`true`に設定した時、行番号の表示フォーマットを指定する&lt;br&gt;
+    * 行番号を表す整数を受け取り、整形した文字列を返す関数を指定する
+    * @cfg {Boolean} [preset.fixedGutter=true]
+    * `lineNumbers`、`lineWrapping`が`true`に設定され、水平スクロールが発生した時&lt;br&gt;
+    * 行番号がスクロールに追従するかどうかを指定する&lt;br&gt;
+    * デフォルトでは`true`に指定されており、コードブロックの左側に固定して表示される
+    *
+     */
+    preset: {},
+
+<span id='RoomMirror-method-byAnnotation'>    /**
+</span>    * @method byAnnotation
+    * HTML内の任意の要素をアノテーションとみなして、次に続く要素のシンタックスハイライトを行う&lt;br&gt;
+    * `data-eval`の文字列がevalで評価され、デフォルトの設定とマージされた後`CodeMirror`に渡される&lt;br&gt;
+    * Markdownのコードブロックをシンタックスハイライトする事を想定している&lt;br&gt;
+    *
+    * html
+    *
+    *     &lt;p class=&quot;rm-a&quot; data-eval=&quot;{ mode:&#39;javascript&#39; }&quot;&gt;&lt;/p&gt;
+    *     &lt;div&gt;
+    *     var test = &#39;test&#39;;
+    *     &lt;/div&gt;
+    *
+    * javascript
+    *
+    *     var codeBlocks = RoomMirror.byAnnotation(&#39;.rm-a&#39;);
+    *
+    * __Markdownの場合__
+    *
+    * markdown
+    *
+    *     &lt;p class=&quot;rm-a&quot; data-eval=&quot;{ mode:&#39;javascript&#39; }&quot;&gt;&lt;/p&gt;
+    *     ```
+    *     var code = &#39;code blocks in markdown.&#39;;
+    *     ```
+    *
+    * javascript
+    *
+    *     var codeBlocks = RoomMirror.byAnnotation(&#39;.rm-a&#39;);
+    *
+    *
+    * @param {String} qs  String for querySelector
+    * @return {CodeMirror}
+     */
+    byAnnotation: byAnnotation
+  });
+
+  module.exports = RoomMirror;
+
+}).call(this);
+</pre>
+</body>
+</html>
