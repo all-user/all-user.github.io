@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   ];
   captions = ['no options', 'vsync', 'wait=100', 'vsync,pulse=4', 'wait=100,pulse=20,spike', 'wait=4'];
-  _now = performance.now();
+  _now = (performance || Date).now();
   t0.getInfo(_now);
   t1.getInfo(_now);
   t2.getInfo(_now);
