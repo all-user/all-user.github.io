@@ -425,7 +425,7 @@ ClockView = require('./clock-view');
 TimeInfo = require('./time-info');
 
 document.addEventListener('DOMContentLoaded', function() {
-  var $internal, _now, aps, c, captions, clocks, fps, handler, i, j, k, len, len1, m_c, opt, options, results, s_c, spike, stage, t0, t1, t2, t3, t4, t5;
+  var $internal, _date, _now, aps, c, captions, clocks, fps, handler, i, j, k, len, len1, m_c, opt, options, results, s_c, spike, stage, t0, t1, t2, t3, t4, t5;
   stage = document.querySelector('#stage');
   aps = 360;
   fps = 180;
@@ -460,7 +460,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   ];
   captions = ['no options', 'vsync', 'wait=100', 'vsync,pulse=4', 'wait=100,pulse=20,spike', 'wait=4'];
-  _now = (performance || Date).now();
+  _date = typeof performance !== "undefined" && performance !== null ? performance : Date;
+  _now = _date.now();
   t0.getInfo(_now);
   t1.getInfo(_now);
   t2.getInfo(_now);

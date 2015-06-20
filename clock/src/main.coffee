@@ -34,7 +34,8 @@ document.addEventListener 'DOMContentLoaded', ->
     'wait=4'
   ]
 
-  _now = (performance || Date).now()
+  _date = performance ? Date
+  _now = _date.now()
 
   t0.getInfo _now
   t1.getInfo _now
