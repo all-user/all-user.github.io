@@ -71,10 +71,11 @@ document.addEventListener 'DOMContentLoaded', ->
   cntStyle.left   =
   cntStyle.right  = '-1000px'
 
-  cntStyle.margin    = '0 auto'
-  cntStyle.height    = '36px'
-  cntStyle.bottom    = '-44px'
-  cntStyle.textAlign = 'center'
+  cntStyle.margin     = '0 auto'
+  cntStyle.height     = 'auto'
+  cntStyle.lineHeight = '16px'
+  cntStyle.bottom     = '-56px'
+  cntStyle.textAlign  = 'center'
 
   spanStyle.height     =
   spanStyle.lineHeight = '12px'
