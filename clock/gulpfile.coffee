@@ -11,12 +11,3 @@ gulp.task 'build', ->
   .bundle()
   .pipe source 'main.js'
   .pipe gulp.dest './build'
-
-gulp.task 'coeff', ->
-  browserify
-    entries:    ['./src/main-coeff.coffee']
-    extensions: ['.coffee']
-  .transform coffeeify
-  .bundle()
-  .pipe source 'coeff.js'
-  .pipe gulp.dest './build'

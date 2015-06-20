@@ -41,25 +41,27 @@ var RAF_X = global["cancelAnimationFrame"]  ||
 // --- class / interfaces ----------------------------------
 function Clock(ticks,     // @arg TickFunctionArray = [] - [tick, ...]
                options) { // @arg Object = {} - { vsync, wait, pulse, spike, start, offset }
-                          // @options.vsync  Boolean  = false  - vsync mode.
-                          // @options.wait   Number   = 16.666 - setInterval(tick, wait)
-                          // @options.pulse  Number   = 0.0    - overwrite delta time(unit: ms)(range of oscillation time).
-                          // @options.spike  Function = null   - generate an irregular pulse(arrhythmia).
-                          // @options.start  Boolean  = false  - auto start.
-                          // @options.offset Number   = 0.0    - timeStamp offset.
+                          // @options.vsync     Boolean  = false  - vsync mode.
+                          // @options.wait      Number   = 16.666 - setInterval(tick, wait)
+                          // @options.pulse     Number   = 0.0    - overwrite delta time(unit: ms)(range of oscillation time).
+                          // @options.spike     Function = null   - generate an irregular pulse(arrhythmia).
+                          // @options.start     Boolean  = false  - auto start.
+                          // @options.offset    Number   = 0.0    - timeStamp offset.
+                          // @options.transform Function = null   - transform timeStamp and deltaTime.
                           // @desc Master Clock.
 //{@dev
     if (!global["BENCHMARK"]) {
         $valid($type(ticks, "TickFunctionArray|omit"), Clock, "ticks");
         $valid($type(options, "Object|omit"), Clock, "options");
-        $valid($keys(options, "vsync|wait|pulse|spike|start|offset"), Clock, "options");
+        $valid($keys(options, "vsync|wait|pulse|spike|start|offset|transform"), Clock, "options");
         if (options) {
-            $valid($type(options.vsync,  "Boolean|omit"),  Clock, "options.vsync");
-            $valid($type(options.wait,   "Number|omit"),   Clock, "options.wait");
-            $valid($type(options.pulse,  "Number|omit"),   Clock, "options.pulse");
-            $valid($type(options.spike,  "Function|omit"), Clock, "options.spike");
-            $valid($type(options.start,  "Boolean|omit"),  Clock, "options.start");
-            $valid($type(options.offset, "Number|omit"),   Clock, "options.offset");
+            $valid($type(options.vsync,     "Boolean|omit"),  Clock, "options.vsync");
+            $valid($type(options.wait,      "Number|omit"),   Clock, "options.wait");
+            $valid($type(options.pulse,     "Number|omit"),   Clock, "options.pulse");
+            $valid($type(options.spike,     "Function|omit"), Clock, "options.spike");
+            $valid($type(options.start,     "Boolean|omit"),  Clock, "options.start");
+            $valid($type(options.offset,    "Number|omit"),   Clock, "options.offset");
+            $valid($type(options.transform, "Function|omit"), Clock, "options.transform");
         }
     }
 //}@dev
@@ -81,7 +83,11 @@ function Clock(ticks,     // @arg TickFunctionArray = [] - [tick, ...]
 
     // --- slave mode ---
     this._master      = null;                       // Clock    - external master clock.
+    this._slaves      = [];                         // ClockInstanceArray. [clock, ...]
     this._exportTicks = _callTicks.bind(this);      // Function - _callTicks.bind(this)
+
+    // --- transform ---
+    this._transform = options["transform"] || null; // Function - transform time stamp and elapsed.
 
     // --- get base time ---
     if (this._vsync) {
@@ -115,6 +121,7 @@ Clock["prototype"] = Object.create(Clock, {
     "ticks":        { "get":   function()  { return this._ticks; } },
     // --- slave mode ---
     "master":       { "get":   function()     { return this._master; } },
+    "slaves":       { "get":   function()     { return this._slaves; } },
     "external":     { "value": Clock_external }, // Clock#external(master:Clock):void
     "internal":     { "value": Clock_internal }, // Clock#internal():void
 });
@@ -161,29 +168,53 @@ function _enterFrame(highResTimeStamp) { // @arg DOMHighResTimeStamp|undefined -
 
 function _callTicks(timeStamp, deltaTime) { // @bind this
     var garbage = false; // functions that are no longer needed.
+    var arg0 = timeStamp;
+
+    if (this._transform) {
+        arg0 = this._transform(timeStamp, deltaTime);
+    }
 
     // --- callback tick function ---
     for (var i = 0, iz = this._ticks.length; i < iz; ++i) {
         var tick = this._ticks[i];
         if (tick) {
-            tick(timeStamp, deltaTime);
+            tick(arg0, deltaTime);
         } else {
             garbage = true;
         }
     }
     if (garbage) {
-        _shrink.call(this);
+        this.ticks = _shrink(this._ticks);
+    }
+
+    // --- callback slaves tick function ---
+    var iz;
+    if (iz = this._slaves.length) {
+        var garbage = false;
+
+        for (var i = 0; i < iz; ++i) {
+            var slave = this._slaves[i];
+            if (slave) {
+                _callTicks.call(slave, timeStamp, deltaTime);
+            } else {
+                garbage = true;
+            }
+        }
+        if (garbage) {
+            this._slaves = _shrink(this._slaves);
+        }
     }
 }
 
-function _shrink() { // @bind this
+function _shrink(arr) { // @arg Array - ticks or slaves.
+                        // @ret Array - dense array.
     var denseArray = [];
-    for (var i = 0, iz = this._ticks.length; i < iz; ++i) {
-        if (this._ticks[i]) {
-            denseArray.push(this._ticks[i]);
+    for (var i = 0, iz = arr.length; i < iz; ++i) {
+        if (arr[i]) {
+            denseArray.push(arr[i]);
         }
     }
-    this._ticks = denseArray; // overwrite
+    return denseArray;
 }
 
 function Clock_start() {
@@ -228,6 +259,7 @@ function Clock_clear() { // @desc clear all ticks.
 }
 
 function Clock_external(master) { // @arg Clock
+                                  // @desc delegate calling ticks to external clock.
     if (this._master === master) {
         return;
     }
@@ -237,8 +269,8 @@ function Clock_external(master) { // @arg Clock
 
     this["stop"]();
 
+    master._slaves.push(this);
     this._master = master;
-    this._master["on"](this._exportTicks);
 }
 
 function Clock_internal() { // @desc release from external clock.
@@ -246,7 +278,10 @@ function Clock_internal() { // @desc release from external clock.
         return;
     }
 
-    this._master["off"](this._exportTicks);
+    var pos = this._master._slaves.indexOf(this);
+    if (pos >= 0) {
+        this._master._slaves[pos] = null;
+    }
     this._master = null;
 }
 
@@ -254,11 +289,12 @@ return Clock; // return entity
 
 });
 
-
 },{}],2:[function(require,module,exports){
-var Clock, ClockView, _constructDOM, _genTransformProp, _transformProp, _update;
+var Clock, ClockView, _constructDOM, _counter, _face, _genTransformProp, _hand, _mode, _span, _transformProp, _update;
 
-Clock = require('../../Clock.js/lib/Clock');
+Clock = require('../node_modules/uupaa.clock.js/lib/Clock');
+
+_face = _hand = _mode = _counter = _span = null;
 
 _transformProp = null;
 
@@ -275,44 +311,92 @@ _genTransformProp = function() {
   return p;
 };
 
-_constructDOM = function(x, y) {
-  var face, faceStyle, hand, handStyle;
-  face = document.createElement('div');
-  hand = document.createElement('div');
-  faceStyle = face.style;
-  handStyle = hand.style;
-  faceStyle.display = handStyle.display = 'block';
-  faceStyle.position = handStyle.position = 'absolute';
+document.addEventListener('DOMContentLoaded', function() {
+  var _, cntStyle, faceStyle, handStyle, i, modeStyle, spanStyle;
+  _face = document.createElement('div');
+  _hand = document.createElement('div');
+  _mode = document.createElement('div');
+  _counter = document.createElement('div');
+  _span = document.createElement('span');
+  faceStyle = _face.style;
+  handStyle = _hand.style;
+  modeStyle = _mode.style;
+  cntStyle = _counter.style;
+  spanStyle = _span.style;
+  faceStyle.display = handStyle.display = modeStyle.display = cntStyle.display = 'block';
+  faceStyle.position = handStyle.position = modeStyle.position = cntStyle.position = 'absolute';
   faceStyle.width = faceStyle.height = handStyle.height = '80px';
   handStyle.width = '5px';
-  faceStyle.left = x + 'px';
-  faceStyle.top = y + 'px';
+  modeStyle.width = modeStyle.height = modeStyle.lineHeight = '80px';
+  modeStyle.fontSize = '50px';
+  modeStyle.textAlign = 'center';
+  modeStyle.fontFamily = 'sans-serif';
+  modeStyle.opacity = '.3';
+  modeStyle.zIndex = '100';
+  cntStyle.width = spanStyle.width = '140px';
+  cntStyle.left = cntStyle.right = '-1000px';
+  cntStyle.margin = '0 auto';
+  cntStyle.height = '36px';
+  cntStyle.bottom = '-44px';
+  cntStyle.textAlign = 'center';
+  spanStyle.height = spanStyle.lineHeight = '12px';
+  spanStyle.fontSize = '10px';
+  spanStyle.fontFamily = 'Courier, "Courier New", monospace';
+  spanStyle.color = 'black';
+  spanStyle.background = 'white';
+  spanStyle.display = 'inline-block';
+  spanStyle.position = 'relative';
+  for (_ = i = 0; i <= 2; _ = ++i) {
+    _counter.appendChild(_span.cloneNode());
+  }
+  _counter.firstChild.style.color = '#f20';
   handStyle.left = handStyle.right = 0;
   handStyle.margin = '0 auto';
+  handStyle.zIndex = '200';
   faceStyle.background = 'url(clock_scale.png) no-repeat';
   handStyle.background = 'url(clock_hand.png) no-repeat';
   faceStyle.backgroundSize = '80px 80px';
   handStyle.backgroundSize = '5px 80px';
-  face.appendChild(hand);
+  faceStyle.cursor = 'pointer';
+  _face.appendChild(_hand);
+  _face.appendChild(_mode);
+  return _face.appendChild(_counter);
+});
+
+_constructDOM = function(x, y) {
+  var cnt, face;
+  face = _face.cloneNode(true);
+  cnt = face.lastChild;
+  face.style.left = x + 'px';
+  face.style.top = y + 'px';
   this.dom = face;
-  return this._handStyle = handStyle;
+  this._handStyle = face.firstChild.style;
+  this._caption = cnt.firstChild;
+  this._txt1 = cnt.children[1];
+  this._txt2 = cnt.lastChild;
+  return this._mode = face.children[1];
 };
 
-_update = function() {
-  this._angle = (this._angle + 2) % 360;
-  return this._handStyle[_transformProp] = "rotate3d(0,0,1," + this._angle + "deg)";
+_update = function(info) {
+  var _fps, _sec;
+  this._handStyle[_transformProp] = "rotate3d(0,0,1," + (info.totalCoefficient % info.goalFPS * (this._APS / info.goalFPS)) + "deg)";
+  _sec = ("00000000" + (this.clock.lastTimeStamp | 0)).slice(-8);
+  this._txt1.textContent = 'sec: ' + _sec.slice(0, 5) + '.' + _sec.slice(-3);
+  _fps = ("00000000" + (info.FPS * 1000 | 0)).slice(-8);
+  return this._txt2.textContent = 'fps: ' + _fps.slice(0, 5) + '.' + _fps.slice(-3);
 };
 
 ClockView = (function() {
-  function ClockView(x, y, stage, clockOptions) {
+  function ClockView(APS, x, y, stage, clockOptions, caption) {
     if (_transformProp == null) {
       _transformProp = _genTransformProp();
     }
     this.clock = new Clock([], clockOptions);
     this.stage = stage;
     this.update = _update.bind(this);
-    this._angle = 0;
+    this._APS = APS;
     _constructDOM.call(this, x, y);
+    this._caption.textContent = caption;
     this.stage.appendChild(this.dom);
   }
 
@@ -333,33 +417,67 @@ ClockView = (function() {
 module.exports = ClockView;
 
 
-},{"../../Clock.js/lib/Clock":1}],3:[function(require,module,exports){
-var ClockView;
+},{"../node_modules/uupaa.clock.js/lib/Clock":1}],3:[function(require,module,exports){
+var ClockView, TimeInfo;
 
 ClockView = require('./clock-view');
 
+TimeInfo = require('./time-info');
+
 document.addEventListener('DOMContentLoaded', function() {
-  var c, clocks, handler, i, j, k, len, len1, opt, options, results, stage;
+  var $internal, _now, aps, c, captions, clocks, fps, handler, i, j, k, len, len1, m_c, opt, options, results, s_c, spike, stage, t0, t1, t2, t3, t4, t5;
   stage = document.querySelector('#stage');
+  aps = 360;
+  fps = 180;
+  spike = function(ts, pulse, cnt) {
+    if (cnt % 10 === 0) {
+      return pulse * 2;
+    } else {
+      return pulse;
+    }
+  };
   options = [
-    {}, {
-      vsync: true
-    }, {
-      wait: 100,
-      pulse: 20
+    {
+      transform: (t0 = new TimeInfo(fps)).getInfo.bind(t0)
     }, {
       vsync: true,
+      transform: (t1 = new TimeInfo(fps)).getInfo.bind(t1)
+    }, {
       wait: 100,
-      pulse: 20
+      transform: (t2 = new TimeInfo(fps)).getInfo.bind(t2)
+    }, {
+      vsync: true,
+      pulse: 4,
+      transform: (t3 = new TimeInfo(fps)).getInfo.bind(t3)
+    }, {
+      wait: 100,
+      pulse: 20,
+      spike: spike,
+      transform: (t4 = new TimeInfo(fps)).getInfo.bind(t4)
+    }, {
+      wait: 4,
+      transform: (t5 = new TimeInfo(fps)).getInfo.bind(t5)
     }
   ];
+  captions = ['no options', 'vsync', 'wait=100', 'vsync,pulse=4', 'wait=100,pulse=20,spike', 'wait=4'];
+  _now = performance.now();
+  t0.getInfo(_now);
+  t1.getInfo(_now);
+  t2.getInfo(_now);
+  t3.getInfo(_now);
+  t4.getInfo(_now);
+  t5.getInfo(_now);
   clocks = [];
+  m_c = '#f20';
+  s_c = '#3d4';
   for (i = j = 0, len = options.length; j < len; i = ++j) {
     opt = options[i];
-    c = new ClockView(35 + i * 150 % 300, 35 + (i / 2 | 0) * 150, stage, opt);
+    c = new ClockView(aps, 35 + i * 150 % 300, 35 + (i / 2 | 0) * 150, stage, opt, captions[i]);
     handler = function() {
       var k, len1, ref, slave;
       this.clock.internal();
+      this._mode.textContent = 'M';
+      this._mode.style.color = m_c;
       ref = clocks.filter((function(_this) {
         return function(c) {
           return c !== _this;
@@ -368,12 +486,26 @@ document.addEventListener('DOMContentLoaded', function() {
       for (i = k = 0, len1 = ref.length; k < len1; i = ++k) {
         slave = ref[i];
         slave.clock.external(this.clock);
+        slave._mode.textContent = 'S';
+        slave._mode.style.color = s_c;
       }
       return this.clock.start();
     };
     c.dom.addEventListener('click', handler.bind(c));
     clocks.push(c);
   }
+  $internal = document.querySelector('#internal');
+  $internal.addEventListener('click', function() {
+    var k, len1, results;
+    results = [];
+    for (k = 0, len1 = clocks.length; k < len1; k++) {
+      c = clocks[k];
+      c.clock.internal();
+      c.clock.start();
+      results.push(c._mode.textContent = '');
+    }
+    return results;
+  });
   results = [];
   for (k = 0, len1 = clocks.length; k < len1; k++) {
     c = clocks[k];
@@ -383,4 +515,75 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-},{"./clock-view":2}]},{},[3]);
+},{"./clock-view":2,"./time-info":4}],4:[function(require,module,exports){
+
+/**
+* 安定したFPSを擬似的に表現するための時間に関する情報を提供するクラス<br>
+* フレーム度に、前フレームからの経過時間を計測し実現したいFPSとの誤差を計算する
+* @class TimeInfo
+* @constructor
+* `TimeInfo`のインスタンスを生成する
+* @param {Number} goalFPS
+ */
+var TimeInfo;
+
+TimeInfo = (function() {
+  function TimeInfo(goalFPS) {
+    this.goalFPS = goalFPS;
+    this.oldTime = 0;
+    this.paused = true;
+    this.innerCount = 0;
+    this.totalFPS = 0;
+    this.totalCoefficient = 0;
+  }
+
+
+  /** @method getInfo */
+
+  TimeInfo.prototype.getInfo = function(ts) {
+    var FPS, coefficient, elapsed, newTime;
+    if (this.paused === true) {
+      this.paused = false;
+      this.oldTime = ts || performance.now();
+      return {
+        elapsed: 0,
+        coefficient: 0,
+        FPS: 0,
+        averageFPS: 0,
+        averageCoefficient: 0
+      };
+    }
+    newTime = ts || performance.now();
+    elapsed = newTime - this.oldTime;
+    this.oldTime = newTime;
+    FPS = 1000 / elapsed;
+    this.innerCount++;
+    this.totalFPS += FPS;
+    coefficient = this.goalFPS / FPS;
+    this.totalCoefficient += coefficient;
+    return {
+      goalFPS: this.goalFPS,
+      elapsed: elapsed,
+      coefficient: coefficient,
+      totalCoefficient: this.totalCoefficient,
+      FPS: FPS,
+      averageFPS: this.totalFPS / this.innerCount,
+      averageCoefficient: this.totalCoefficient / this.innerCount
+    };
+  };
+
+
+  /** @method pause */
+
+  TimeInfo.prototype.pause = function() {
+    return this.paused = true;
+  };
+
+  return TimeInfo;
+
+})();
+
+module.exports = TimeInfo;
+
+
+},{}]},{},[3]);
