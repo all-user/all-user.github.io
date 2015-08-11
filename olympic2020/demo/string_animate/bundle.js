@@ -9,11 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
     var MARGIN = SIZE / 35;
     var EMBLEM_SIZE = MARGIN * 3;
     var TITLE_COPY = 'tokyo  2020   olympic';
-    var SHORT_COPY = 'hi!!';
-    var DATE_COPY = '8/9:sunday';
-    var BLANK_COPY = '                                                        ';
-    var LONG_COPY = 'olympic paralympic games';
-    var COPYS = [TITLE_COPY, LONG_COPY, SHORT_COPY, '1234567890', BLANK_COPY, DATE_COPY, 'happy day!', BLANK_COPY, 'hello world', TITLE_COPY, LONG_COPY, SHORT_COPY, BLANK_COPY, '1234567890', 'happy day!', 'hello world', BLANK_COPY];
+    var SHORT_COPY = 'hi!!   ';
+    var DATE_COPY = '8/9:sun';
+    var BLANK_COPY = '       ';
+    var LONG_COPY = 'olympicparalympicgame';
+    var COPYS = [TITLE_COPY, LONG_COPY, SHORT_COPY, BLANK_COPY, BLANK_COPY, '1234567890    ', BLANK_COPY, DATE_COPY, 'happy     day!', BLANK_COPY, BLANK_COPY, BLANK_COPY, 'hello  world!!', BLANK_COPY];
 
     var group = new EmblemGroup(TITLE_COPY, { length: 21, size: EMBLEM_SIZE, displayTime: 1500 });
 
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    group.animateFromString(COPYS, { loop: true });
+    group.animateFromString(COPYS.join(''), { loop: true });
 });
 
 },{}]},{},[1]);
