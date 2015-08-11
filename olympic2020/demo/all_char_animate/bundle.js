@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var olms = [];
     var size = getComputedStyle(document.body).width.replace('px', '') - margin * 2;
     size = size > 500 ? 500 : size;
-    var sizeS = size * 0.9;
+    var sizeS = size * 0.18;
 
     olms.push(new Olympic2020('a', { size: sizeS, displayTime: 3111, random: true }));
     olms.push(new Olympic2020('z', { size: sizeS, displayTime: 6399, random: true }));
