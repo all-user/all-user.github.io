@@ -4,7 +4,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     var wrapper = document.querySelector('#wrapper');
     var olms = [];
-    var WIDTH = +getComputedStyle(document.body).width.replace('px', '');
+    var WIDTH = +getComputedStyle(document.querySelector('.container')).width.replace('px', '');
     var PADDING = +getComputedStyle(document.querySelector('.container')).paddingLeft.replace('px', '');
     var SIZE = WIDTH - PADDING * 2;
     var size = SIZE > 500 ? 500 : SIZE;
