@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var wrapper = document.querySelector('#wrapper');
     var olms = [];
-    var size = getComputedStyle(document.body).width.replace('px', '') - margin * 2;
+    //     let size    = (getComputedStyle(document.body).width.replace('px', '')) - margin * 2;
+    var size = getComputedStyle(document.querySelector('.container')).width.replace('px', '') - margin * 2;
     size = size > 500 ? 500 : size;
     var sizeS = size * 0.18;
 

@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var margin = 30;
 
     var wrapper = document.querySelector('#wrapper');
-    var size = getComputedStyle(document.body).width.replace('px', '') - margin * 2;
+    var size = getComputedStyle(document.querySelector('.container')).width.replace('px', '') - margin * 2;
     size = size > 500 ? 500 : size;
 
     var olm = new Olympic2020('t', { size: size });
