@@ -7,14 +7,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var PADDING = +getComputedStyle(document.querySelector('.container')).paddingLeft.replace('px', '');
     var SIZE = WIDTH - PADDING * 2;
     var size = SIZE > 1500 ? 1500 : SIZE;
-    var MARGIN = size / 15;
+    var MARGIN = size / 20;
     var sizeS = MARGIN * 3;
 
-    var init = '109';
+    var init = '2020';
     var olms = [];
     olms.push(new Olympic2020(init[0], { size: sizeS }));
     olms.push(new Olympic2020(init[1], { size: sizeS }));
     olms.push(new Olympic2020(init[2], { size: sizeS }));
+    olms.push(new Olympic2020(init[3], { size: sizeS }));
     olms.forEach(function (e) {
         e.dom.style.margin = MARGIN + 'px';
     });
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     input.addEventListener('input', function (e) {
-        var str = (init + e.target.value).slice(-3);
+        var str = (init + e.target.value).slice(-init.length);
         [].forEach.call(str, function (c, idx) {
             olms[idx].to(c);
         });
