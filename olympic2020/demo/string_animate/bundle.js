@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var WIDTH = +getComputedStyle(document.querySelector('.container')).width.replace('px', '');
     var PADDING = +getComputedStyle(document.querySelector('.container')).paddingLeft.replace('px', '');
     var SIZE = WIDTH - PADDING * 2;
-    var MARGIN = SIZE / 35 * 0.95;
+    var MARGIN = SIZE / 35;
     var EMBLEM_SIZE = MARGIN * 3;
     var TITLE_COPY = 'tokyo  2020   olympic';
     var SHORT_COPY = 'hi!!';
