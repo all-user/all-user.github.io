@@ -71,9 +71,9 @@ function getInputValues() {
     return { vertical: vertical, horizon: horizon, display: display, duration: duration, msg: msg, width: width, height: height };
 }
 
-function clickButtonHandler(cfg) {
+function clickButtonHandler(params) {
 
-    if (typeof cfg !== 'object') {
+    if (typeof params !== 'object') {
         new Error('clickButtonHandler arg expect type is object.');
     }
 
@@ -81,7 +81,7 @@ function clickButtonHandler(cfg) {
         wrapper.removeChild(wrapper.firstChild);
     }
 
-    var group = generateSignboard(cfg);
+    var group = generateSignboard(params);
     group.appendTo(wrapper);
 
     wrapper.addEventListener('click', function () {
@@ -92,25 +92,25 @@ function clickButtonHandler(cfg) {
         }
     });
 
-    group.animateFromString(cfg.msg, { loop: true });
+    group.animateFromString(params.msg, { loop: true });
 }
 
-function generateSignboard(cfg) {
+function generateSignboard(params) {
     // object => EmblemGroup
 
     var _computedStyles = (0, _computed_stylesJs.computedStyles)();
 
     var SIZE = _computedStyles.SIZE;
 
-    if (! typeof cfg === 'object') {
+    if (! typeof params === 'object') {
         return;
     }
 
-    var vertical = cfg.vertical;
-    var horizon = cfg.horizon;
-    var display = cfg.display;
-    var duration = cfg.duration;
-    var msg = cfg.msg;
+    var vertical = params.vertical;
+    var horizon = params.horizon;
+    var display = params.display;
+    var duration = params.duration;
+    var msg = params.msg;
 
     vertical = vertical || 3;
     horizon = horizon || 7;
