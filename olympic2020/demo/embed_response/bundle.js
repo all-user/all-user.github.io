@@ -92,7 +92,11 @@ function clickButtonHandler(params) {
         }
     });
 
-    group.animateFromString(params.msg, { loop: true });
+    params.msg = params.msg.slice(1).concat(params.msg[0]);
+
+    setTimeout(function () {
+        group.animateFromString(params.msg, { loop: true });
+    }, group.emblems[0].displayTime);
 }
 
 function generateSignboard(params) {
