@@ -3,7 +3,7 @@
 
 var _helpersEmbed_helperJs = require('./helpers/embed_helper.js');
 
-window.onload = function () {
+document.addEventListener('DOMContentLoaded', function () {
     var wrapper = document.querySelector('#wrapper');
 
     var pairs = decodeURIComponent(location.search.slice(1)).split('&');
@@ -16,7 +16,7 @@ window.onload = function () {
     params.msg = params.msg.split(',');
 
     (0, _helpersEmbed_helperJs.clickButtonHandler)(params);
-};
+});
 
 },{"./helpers/embed_helper.js":3}],2:[function(require,module,exports){
 'use strict';
