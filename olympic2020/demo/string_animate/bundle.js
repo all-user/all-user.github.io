@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var DATE_COPY = '8/9:sun';
     var BLANK_COPY = '       ';
     var LONG_COPY = 'olympicparalympicgame';
-    var COPYS = [TITLE_COPY, LONG_COPY, SHORT_COPY, BLANK_COPY, BLANK_COPY, '1234567890    ', BLANK_COPY, DATE_COPY, 'happy     day!', BLANK_COPY, BLANK_COPY, BLANK_COPY, 'hello  world!!', BLANK_COPY];
+    var COPYS = [TITLE_COPY, LONG_COPY, SHORT_COPY, '1234567890    ', BLANK_COPY, DATE_COPY, 'happy     day!', BLANK_COPY, 'hello  world!!', BLANK_COPY];
 
     var group = new EmblemGroup(TITLE_COPY, { length: 21, size: EMBLEM_SIZE, displayTime: 1500 });
 
@@ -51,7 +51,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    group.animateFromString(COPYS.join(''), { loop: true });
+    group.animateFromString(COPYS, { loop: true });
+
+    window.group = group;
 });
 
 },{"./helpers/computed_styles.js":1}]},{},[2]);
