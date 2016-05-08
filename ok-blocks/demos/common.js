@@ -128,14 +128,13 @@ var OKBlock = function () {
             if (isLast) {
               if (_this[_LOOP_PROP]) {
                 setTimeout(function () {
-                  _this.animateFromString.call(_this, str);
                   resolve();
+                  _this.animateFromString.call(_this, str);
                 }, _this[_DISPLAY_TIME_PROP]);
-                return;
               } else {
                 setTimeout(reject, _this[_DISPLAY_TIME_PROP]);
-                return;
               }
+              return;
             }
             if (!_this[_IS_ANIMATING_PROP]) {
               _this[_RESUME_PROP] = resolve;
@@ -144,8 +143,10 @@ var OKBlock = function () {
             }
           });
         });
-      }, Promise.resolve()).catch(function () {
+      }, Promise.resolve()).catch(function (err) {
         _this[_IS_ANIMATING_PROP] = false;
+        console.log('OKBlock: cansel before animation.');
+        console.log(err);
       });
     }
 
@@ -415,7 +416,7 @@ function _updateTransitionConfig() {
 var _ROTATE_TABLE = ['rotate0', 'rotate90', 'rotate180', 'rotate270'];
 
 module.exports = OKBlock;
-},{"xtend":4}],2:[function(require,module,exports){
+},{"xtend":6}],2:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
@@ -779,14 +780,13 @@ function _animateFromStringArray(strArr, opt) {
         if (isLast) {
           if (_this2.loop) {
             setTimeout(function () {
-              _animateFromStringArray.call(_this2, strArr);
               resolve();
+              _animateFromStringArray.call(_this2, strArr);
             }, _this2.displayTime);
-            return;
           } else {
             _this2[_IS_ANIMATING_PROP] = false;
-            return;
           }
+          return;
         }
         if (!_this2[_IS_ANIMATING_PROP]) {
           _this2[_RESUME_PROP] = resolve;
@@ -795,8 +795,10 @@ function _animateFromStringArray(strArr, opt) {
         }
       });
     });
-  }, Promise.resolve()).catch(function () {
-    console.log('cansel before animation.');
+  }, Promise.resolve()).catch(function (err) {
+    _this2[_IS_ANIMATING_PROP] = false;
+    console.log('OKBlocksGroup: cansel before animation.');
+    console.log(err);
   });
 }
 
@@ -807,28 +809,9 @@ module.exports = OKBlocksGroup;
 module.exports.OKBlock = require('./OKBlock.js');
 module.exports.OKBlocksGroup = require('./OKBlocksGroup.js');
 },{"./OKBlock.js":1,"./OKBlocksGroup.js":2}],4:[function(require,module,exports){
-module.exports = extend
-
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-function extend() {
-    var target = {}
-
-    for (var i = 0; i < arguments.length; i++) {
-        var source = arguments[i]
-
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-            }
-        }
-    }
-
-    return target
-}
-
-},{}],5:[function(require,module,exports){
 'use strict';
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 /*
  * default options
@@ -860,9 +843,9 @@ var _BASE_DOM = function () {
   // div.whitebox-wrapper > div.whitebox * 4
   var _arr = [0, 1, 2, 3];
   for (var _i = 0; _i < _arr.length; _i++) {
-    var i = _arr[_i];
+    var _i2 = _arr[_i];
     var whiteBox = whiteBoxBase.cloneNode();
-    whiteBox.className = 'whitebox pos_' + i;
+    whiteBox.className = 'whitebox pos_' + _i2;
     whiteBoxWrapper.appendChild(whiteBox);
   }
 
@@ -1029,6 +1012,9 @@ module.exports = function (OKBlock) {
       if (n > this[WEIGHT_LIMIT_PROP] || n < 0) {
         return;
       }
+      if (this[WEIGHT_PROP] === n) {
+        return;
+      }
       this.dom.classList.add('weight_' + n);
       this.dom.classList.remove('weight_' + this[WEIGHT_PROP]);
       this[WEIGHT_PROP] = n;
@@ -1049,9 +1035,35 @@ module.exports = function (OKBlock) {
     value: 6
   });
 
+  var LINE_COLOR_PROP = Symbol();
+  var PAD_COLOR_PROP = Symbol();
+  Object.defineProperty(OKBlock.prototype, 'lineColor', {
+    get: function get() {
+      return this[LINE_COLOR_PROP];
+    },
+    set: function set(color) {
+      [].concat(_toConsumableArray(this.dom.querySelectorAll('.part'))).forEach(function (p) {
+        p.style.backgroundColor = color;
+      });
+      this[LINE_COLOR_PROP] = color;
+    }
+  });
+
+  Object.defineProperty(OKBlock.prototype, 'paddingColor', {
+    get: function get() {
+      return this[PAD_COLOR_PROP];
+    },
+    set: function set(color) {
+      [].concat(_toConsumableArray(this.dom.querySelectorAll('.whitebox'))).forEach(function (p) {
+        p.style.backgroundColor = color;
+      });
+      this[PAD_COLOR_PROP] = color;
+    }
+  });
+
   return OKBlock;
 };
-},{}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 'use strict';
 
 /*
@@ -1175,11 +1187,32 @@ module.exports = function (OKBlock) {
   OKBlock.define('Olympic2020', { _DEFAULT_OPTIONS: _DEFAULT_OPTIONS, _BASE_DOM: _BASE_DOM, _TRANSITION_PROPS: _TRANSITION_PROPS, _formationTable: _formationTable });
   return OKBlock;
 };
+},{}],6:[function(require,module,exports){
+module.exports = extend
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function extend() {
+    var target = {}
+
+    for (var i = 0; i < arguments.length; i++) {
+        var source = arguments[i]
+
+        for (var key in source) {
+            if (hasOwnProperty.call(source, key)) {
+                target[key] = source[key]
+            }
+        }
+    }
+
+    return target
+}
+
 },{}],"@all-user/ok-blocks":[function(require,module,exports){
 module.exports = require('./lib');
 
 },{"./lib":3}],"@all-user/ok-patterns-lines":[function(require,module,exports){
 arguments[4]["@all-user/ok-blocks"][0].apply(exports,arguments)
-},{"./lib":5,"dup":"@all-user/ok-blocks"}],"@all-user/ok-patterns-olympic2020":[function(require,module,exports){
+},{"./lib":4,"dup":"@all-user/ok-blocks"}],"@all-user/ok-patterns-olympic2020":[function(require,module,exports){
 arguments[4]["@all-user/ok-blocks"][0].apply(exports,arguments)
-},{"./lib":6,"dup":"@all-user/ok-blocks"}]},{},[]);
+},{"./lib":5,"dup":"@all-user/ok-blocks"}]},{},[]);

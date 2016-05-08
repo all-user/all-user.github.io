@@ -134,7 +134,7 @@ function generateSignboard(params) {
   var SIZE = _computedStyles.SIZE;
 
 
-  if (!(typeof params === 'undefined' ? 'undefined' : _typeof(params)) === 'object') {
+  if ((typeof params === 'undefined' ? 'undefined' : _typeof(params)) !== 'object') {
     return;
   }
 
