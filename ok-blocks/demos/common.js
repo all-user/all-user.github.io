@@ -27,7 +27,7 @@ var patterns = {}; // initialized in OKBlock.define
 
 var OKBlock = function () {
   function OKBlock(c) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, OKBlock);
 
@@ -47,14 +47,14 @@ var OKBlock = function () {
     this[_CANSELLER_PROP] = function () {};
 
     options = extend(this[_PATTERN_PROP]._DEFAULT_OPTIONS, options);
-    var _options = options;
-    var size = _options.size;
-    var displayTime = _options.displayTime;
-    var duration = _options.duration;
-    var easing = _options.easing;
-    var loop = _options.loop;
-    var random = _options.random;
-    var pedal = _options.pedal;
+    var _options = options,
+        size = _options.size,
+        displayTime = _options.displayTime,
+        duration = _options.duration,
+        easing = _options.easing,
+        loop = _options.loop,
+        random = _options.random,
+        pedal = _options.pedal;
 
     // --- options ---
 
@@ -159,18 +159,18 @@ var OKBlock = function () {
   }, {
     key: 'options',
     set: function set() {
-      var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
       Object.assign(this, options);
     },
     get: function get() {
-      var size = this.size;
-      var displayTime = this.displayTime;
-      var duration = this.duration;
-      var easing = this.easing;
-      var loop = this.loop;
-      var random = this.random;
-      var pedal = this.pedal;
+      var size = this.size,
+          displayTime = this.displayTime,
+          duration = this.duration,
+          easing = this.easing,
+          loop = this.loop,
+          random = this.random,
+          pedal = this.pedal;
 
       return { size: size, displayTime: displayTime, duration: duration, easing: easing, loop: loop, random: random, pedal: pedal };
     }
@@ -416,10 +416,10 @@ function _updateTransitionConfig() {
 var _ROTATE_TABLE = ['rotate0', 'rotate90', 'rotate180', 'rotate270'];
 
 module.exports = OKBlock;
-},{"xtend":6}],2:[function(require,module,exports){
+},{"xtend":4}],2:[function(require,module,exports){
 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -439,16 +439,16 @@ var _CANSELLER_PROP = Symbol();
 
 var OKBlocksGroup = function () {
   function OKBlocksGroup(chars) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, OKBlocksGroup);
 
-    var length = options.length;
-    var displayTime = options.displayTime;
-    var _options$loop = options.loop;
-    var loop = _options$loop === undefined ? false : _options$loop;
-    var _options$random = options.random;
-    var random = _options$random === undefined ? false : _options$random;
+    var length = options.length,
+        displayTime = options.displayTime,
+        _options$loop = options.loop,
+        loop = _options$loop === undefined ? false : _options$loop,
+        _options$random = options.random,
+        random = _options$random === undefined ? false : _options$random;
 
     this[_IS_ANIMATING_PROP] = false;
     this[_RESUME_PROP] = null;
@@ -525,20 +525,16 @@ var OKBlocksGroup = function () {
   }, {
     key: 'animateFromString',
     value: function animateFromString(str, opt) {
-      var _this = this;
-
       var strArr = void 0;
       if (typeof str === 'string') {
-        (function () {
-          var len = _this.emblems.length;
-          strArr = [].concat(_toConsumableArray(str)).reduce(function (arr, s, idx) {
-            if (idx % len === 0) {
-              arr.push('');
-            }
-            arr[idx / len | 0] += s;
-            return arr;
-          }, []);
-        })();
+        var len = this.emblems.length;
+        strArr = [].concat(_toConsumableArray(str)).reduce(function (arr, s, idx) {
+          if (idx % len === 0) {
+            arr.push('');
+          }
+          arr[idx / len | 0] += s;
+          return arr;
+        }, []);
       } else if (Array.isArray(str) && str.every(function (s) {
         return typeof s === 'string';
       })) {
@@ -564,19 +560,19 @@ var OKBlocksGroup = function () {
   }, {
     key: 'options',
     set: function set() {
-      var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
       Object.assign(this, options);
     },
     get: function get() {
-      var length = this.length;
-      var displayTime = this.displayTime;
-      var loop = this.loop;
-      var random = this.random;
-      var size = this.size;
-      var duration = this.duration;
-      var easing = this.easing;
-      var pedal = this.pedal;
+      var length = this.length,
+          displayTime = this.displayTime,
+          loop = this.loop,
+          random = this.random,
+          size = this.size,
+          duration = this.duration,
+          easing = this.easing,
+          pedal = this.pedal;
 
       return { length: length, displayTime: displayTime, loop: loop, random: random, size: size, duration: duration, easing: easing, pedal: pedal };
     }
@@ -758,7 +754,7 @@ function _transformToOKBlockArray(arg, opt) {
 }
 
 function _animateFromStringArray(strArr, opt) {
-  var _this2 = this;
+  var _this = this;
 
   this[_CANSELLER_PROP](); // cansel before animation.
 
@@ -770,33 +766,33 @@ function _animateFromStringArray(strArr, opt) {
     var isLast = idx === strArr.length - 1;
     return p.then(function () {
       return new Promise(function (resolve, reject) {
-        _this2[_CANSELLER_PROP] = reject;
-        if (_this2[_RANDOM_PROP]) {
+        _this[_CANSELLER_PROP] = reject;
+        if (_this[_RANDOM_PROP]) {
           var _s = strArr[Math.random() * strArr.length | 0];
-          _this2.map(_s);
+          _this.map(_s);
         } else {
-          _this2.map(s);
+          _this.map(s);
         }
         if (isLast) {
-          if (_this2.loop) {
+          if (_this.loop) {
             setTimeout(function () {
               resolve();
-              _animateFromStringArray.call(_this2, strArr);
-            }, _this2.displayTime);
+              _animateFromStringArray.call(_this, strArr);
+            }, _this.displayTime);
           } else {
-            _this2[_IS_ANIMATING_PROP] = false;
+            _this[_IS_ANIMATING_PROP] = false;
           }
           return;
         }
-        if (!_this2[_IS_ANIMATING_PROP]) {
-          _this2[_RESUME_PROP] = resolve;
+        if (!_this[_IS_ANIMATING_PROP]) {
+          _this[_RESUME_PROP] = resolve;
         } else {
-          setTimeout(resolve, _this2.displayTime);
+          setTimeout(resolve, _this.displayTime);
         }
       });
     });
   }, Promise.resolve()).catch(function (err) {
-    _this2[_IS_ANIMATING_PROP] = false;
+    _this[_IS_ANIMATING_PROP] = false;
     console.log('OKBlocksGroup: cansel before animation.');
     console.log(err);
   });
@@ -809,6 +805,27 @@ module.exports = OKBlocksGroup;
 module.exports.OKBlock = require('./OKBlock.js');
 module.exports.OKBlocksGroup = require('./OKBlocksGroup.js');
 },{"./OKBlock.js":1,"./OKBlocksGroup.js":2}],4:[function(require,module,exports){
+module.exports = extend
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function extend() {
+    var target = {}
+
+    for (var i = 0; i < arguments.length; i++) {
+        var source = arguments[i]
+
+        for (var key in source) {
+            if (hasOwnProperty.call(source, key)) {
+                target[key] = source[key]
+            }
+        }
+    }
+
+    return target
+}
+
+},{}],5:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -1063,7 +1080,7 @@ module.exports = function (OKBlock) {
 
   return OKBlock;
 };
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 /*
@@ -1187,32 +1204,11 @@ module.exports = function (OKBlock) {
   OKBlock.define('Olympic2020', { _DEFAULT_OPTIONS: _DEFAULT_OPTIONS, _BASE_DOM: _BASE_DOM, _TRANSITION_PROPS: _TRANSITION_PROPS, _formationTable: _formationTable });
   return OKBlock;
 };
-},{}],6:[function(require,module,exports){
-module.exports = extend
-
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-function extend() {
-    var target = {}
-
-    for (var i = 0; i < arguments.length; i++) {
-        var source = arguments[i]
-
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-            }
-        }
-    }
-
-    return target
-}
-
 },{}],"@all-user/ok-blocks":[function(require,module,exports){
 module.exports = require('./lib');
 
 },{"./lib":3}],"@all-user/ok-patterns-lines":[function(require,module,exports){
 arguments[4]["@all-user/ok-blocks"][0].apply(exports,arguments)
-},{"./lib":4,"dup":"@all-user/ok-blocks"}],"@all-user/ok-patterns-olympic2020":[function(require,module,exports){
+},{"./lib":5,"dup":"@all-user/ok-blocks"}],"@all-user/ok-patterns-olympic2020":[function(require,module,exports){
 arguments[4]["@all-user/ok-blocks"][0].apply(exports,arguments)
-},{"./lib":5,"dup":"@all-user/ok-blocks"}]},{},[]);
+},{"./lib":6,"dup":"@all-user/ok-blocks"}]},{},[]);
