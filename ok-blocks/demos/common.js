@@ -1,69 +1,65 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var extend = require('xtend');
-
-var _PATTERN_NAME_PROP = Symbol();
-var _PATTERN_PROP = Symbol();
-var _CHAR_PROP = Symbol();
-var _DOM_PROP = Symbol();
-var _DISPLAY_TIME_PROP = Symbol();
-var _DURATION_PROP = Symbol();
-var _EASING_PROP = Symbol();
-var _IS_ANIMATING_PROP = Symbol();
-var _RESUME_PROP = Symbol();
-var _LOOP_PROP = Symbol();
-var _RANDOM_PROP = Symbol();
-var _PEDAL_PROP = Symbol();
-var _CANSELLER_PROP = Symbol();
-
-var patterns = {}; // initialized in OKBlock.define
-
 var OKBlock = function () {
-  function OKBlock(c) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  _createClass(OKBlock, null, [{
+    key: 'factory',
+    value: function factory(c, options) {
+      if (options.pattern == null) {
+        throw new Error('options.pattern is not set.');
+      }
+      if (this.patterns[options.pattern] == null) {
+        throw new Error(options.pattern + ' pattern is undefined.');
+      }
+      return new this.patterns[options.pattern]._Class(c, options);
+    }
+  }]);
 
+  function OKBlock(c, options) {
     _classCallCheck(this, OKBlock);
 
     if (options.pattern == null) {
-      console.error('options.pattern is not set.');
+      throw new Error('options.pattern is not set.');
     }
-    if (patterns[options.pattern] == null) {
-      console.error(options.pattern + ' pattern is undefined.');return;
+    if (this.constructor.patterns[options.pattern] == null) {
+      throw new Error(options.pattern + ' pattern is undefined.');
     }
 
-    this[_PATTERN_NAME_PROP] = options.pattern;
-    this[_PATTERN_PROP] = patterns[options.pattern];
-    this[_IS_ANIMATING_PROP] = false;
-    this[_RESUME_PROP] = null;
-    this[_CHAR_PROP] = null;
-    this[_DOM_PROP] = _createDom.call(this);
-    this[_CANSELLER_PROP] = function () {};
+    this.pattern = options.pattern;
+    this.patternDefinition = this.constructor.patterns[this.pattern];
+    this.isAnimating = false;
+    this.resumeAnimate = null;
+    this.char = null;
+    this.dom = _createDom.call(this);
+    this.cancelAnimation = function () {};
 
-    options = extend(this[_PATTERN_PROP]._DEFAULT_OPTIONS, options);
-    var _options = options,
-        size = _options.size,
+    var _options = Object.assign({}, this.patternDefinition._DEFAULT_OPTIONS, options);
+    var size = _options.size,
         displayTime = _options.displayTime,
         duration = _options.duration,
         easing = _options.easing,
         loop = _options.loop,
         random = _options.random,
-        pedal = _options.pedal;
+        distinct = _options.distinct;
 
     // --- options ---
 
     this.displayTime = +displayTime;
     this.duration = +duration;
-    this.loop = loop;
-    this.random = random;
+    this.loop = !!loop;
+    this.random = !!random;
     this.easing = easing || 'cubic-bezier(.26,.92,.41,.98)';
-    this.pedal = pedal;
+    this.distinct = !!distinct;
 
     if (typeof size === 'number' && size >= 0) {
       this.size = size;
@@ -78,39 +74,44 @@ var OKBlock = function () {
     key: 'to',
     value: function to(c) {
       var _c = c && c.toLowerCase && c.toLowerCase();
-      if (!this[_PATTERN_PROP]._formationTable[_c]) {
+      if (!this.patternDefinition._formationTable[_c]) {
         return false;
       }
-      if (this[_CHAR_PROP] === _c) {
+      if (this.char === _c) {
         return false;
       }
       _changeStyle.call(this, _c);
-      this[_CHAR_PROP] = _c;
+      this.char = _c;
       return true;
     }
   }, {
     key: 'appendTo',
     value: function appendTo(parent) {
-      parent.appendChild(this[_DOM_PROP]);
+      parent.appendChild(this.dom);
     }
   }, {
     key: 'stopAnimate',
     value: function stopAnimate() {
-      this[_IS_ANIMATING_PROP] = false;
+      this.isAnimating = false;
     }
   }, {
     key: 'resumeAnimate',
     value: function resumeAnimate() {
-      this[_IS_ANIMATING_PROP] = true;
-      this[_RESUME_PROP]();
+      if (typeof this.resumeAnimate === 'function') {
+        this.isAnimating = true;
+        this.resumeAnimate();
+      }
     }
   }, {
     key: 'animateFromString',
-    value: function animateFromString(str, opt) {
+    value: function animateFromString(str) {
       var _this = this;
 
-      this[_IS_ANIMATING_PROP] = true;
-      this[_RESUME_PROP] = null;
+      var opt = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+
+      this.isAnimating = true;
+      this.resumeAnimate = null;
       this.options = opt;
 
       [].concat(_toConsumableArray(str)).reduce(function (p, c, idx) {
@@ -118,33 +119,33 @@ var OKBlock = function () {
         var isLast = idx === str.length - 1;
         return p.then(function () {
           return new Promise(function (resolve, reject) {
-            _this[_CANSELLER_PROP] = reject;
-            if (_this[_RANDOM_PROP]) {
+            _this.cancelAnimation = reject;
+            if (_this._random) {
               var _c = str[Math.random() * str.length | 0];
               _this.to(_c);
             } else {
               _this.to(c);
             }
             if (isLast) {
-              if (_this[_LOOP_PROP]) {
+              if (_this._loop) {
                 setTimeout(function () {
                   resolve();
                   _this.animateFromString.call(_this, str);
-                }, _this[_DISPLAY_TIME_PROP]);
+                }, _this._displayTime);
               } else {
-                setTimeout(reject, _this[_DISPLAY_TIME_PROP]);
+                setTimeout(reject, _this._displayTime);
               }
               return;
             }
-            if (!_this[_IS_ANIMATING_PROP]) {
-              _this[_RESUME_PROP] = resolve;
+            if (!_this.isAnimating) {
+              _this.resumeAnimate = resolve;
             } else {
-              setTimeout(resolve, _this[_DISPLAY_TIME_PROP]);
+              setTimeout(resolve, _this._displayTime);
             }
           });
         });
       }, Promise.resolve()).catch(function (err) {
-        _this[_IS_ANIMATING_PROP] = false;
+        _this.isAnimating = false;
         console.log('OKBlock: cansel before animation.');
         console.log(err);
       });
@@ -160,8 +161,35 @@ var OKBlock = function () {
     key: 'options',
     set: function set() {
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var size = options.size,
+          displayTime = options.displayTime,
+          duration = options.duration,
+          easing = options.easing,
+          loop = options.loop,
+          random = options.random,
+          distinct = options.distinct;
 
-      Object.assign(this, options);
+      if (size != null) {
+        this.size = size;
+      }
+      if (displayTime != null) {
+        this.displayTime = displayTime;
+      }
+      if (duration != null) {
+        this.duration = duration;
+      }
+      if (easing != null) {
+        this.easing = easing;
+      }
+      if (loop != null) {
+        this.loop = loop;
+      }
+      if (random != null) {
+        this.random = random;
+      }
+      if (distinct != null) {
+        this.distinct = distinct;
+      }
     },
     get: function get() {
       var size = this.size,
@@ -170,9 +198,9 @@ var OKBlock = function () {
           easing = this.easing,
           loop = this.loop,
           random = this.random,
-          pedal = this.pedal;
+          distinct = this.distinct;
 
-      return { size: size, displayTime: displayTime, duration: duration, easing: easing, loop: loop, random: random, pedal: pedal };
+      return { size: size, displayTime: displayTime, duration: duration, easing: easing, loop: loop, random: random, distinct: distinct };
     }
 
     // --- size ---
@@ -184,7 +212,7 @@ var OKBlock = function () {
         return;
       }
       if (typeof size === 'number' && size >= 0) {
-        var domStyle = this[_DOM_PROP].style;
+        var domStyle = this.dom.style;
         domStyle.width = size + 'px';
         domStyle.height = size + 'px';
       } else {
@@ -192,7 +220,7 @@ var OKBlock = function () {
       }
     },
     get: function get() {
-      return +this[_DOM_PROP].style.width.replace('px', '');
+      return +this.dom.style.width.replace('px', '');
     }
 
     // --- displayTime ---
@@ -204,13 +232,13 @@ var OKBlock = function () {
         return;
       }
       if (typeof time === 'number' && time > 0) {
-        this[_DISPLAY_TIME_PROP] = time;
+        this._displayTime = time;
       } else {
         console.error('OKBlock.displayTime should be positive number.');
       }
     },
     get: function get() {
-      return this[_DISPLAY_TIME_PROP];
+      return this._displayTime;
     }
 
     // --- duration ---
@@ -222,14 +250,14 @@ var OKBlock = function () {
         return;
       }
       if (typeof time === 'number' && time >= 0) {
-        this[_DURATION_PROP] = time;
+        this._duration = time;
         _updateTransitionConfig.call(this);
       } else {
         console.error('OKBlock.duration should be zero or positive number.', time);
       }
     },
     get: function get() {
-      return this[_DURATION_PROP];
+      return this._duration;
     }
 
     // --- easing ---
@@ -240,11 +268,11 @@ var OKBlock = function () {
       if (val == null) {
         return;
       }
-      this[_EASING_PROP] = val;
+      this._eaasing = val;
       _updateTransitionConfig.call(this);
     },
     get: function get() {
-      return this[_EASING_PROP];
+      return this._eaasing;
     }
 
     // --- loop ---
@@ -255,10 +283,10 @@ var OKBlock = function () {
       if (bool == null) {
         return;
       }
-      this[_LOOP_PROP] = bool;
+      this._loop = bool;
     },
     get: function get() {
-      return this[_LOOP_PROP];
+      return this._loop;
     }
 
     // --- random ---
@@ -269,56 +297,24 @@ var OKBlock = function () {
       if (bool == null) {
         return;
       }
-      this[_RANDOM_PROP] = bool;
+      this._random = bool;
     },
     get: function get() {
-      return this[_RANDOM_PROP];
+      return this._random;
     }
 
-    // --- pedal ---
+    // --- distinct ---
 
   }, {
-    key: 'pedal',
+    key: 'distinct',
     set: function set(bool) {
       if (bool == null) {
         return;
       }
-      this[_PEDAL_PROP] = bool;
+      this._distinct = bool;
     },
     get: function get() {
-      return this[_PEDAL_PROP];
-    }
-
-    // --- pattern ---
-
-  }, {
-    key: 'pattern',
-    get: function get() {
-      return this[_PATTERN_NAME_PROP];
-    }
-
-    // --- dom ---
-
-  }, {
-    key: 'dom',
-    get: function get() {
-      return this[_DOM_PROP];
-    }
-
-    // --- char ---
-
-  }, {
-    key: 'char',
-    get: function get() {
-      return this[_CHAR_PROP];
-    }
-
-    // --- isAnimating ---
-
-  }, {
-    key: 'isAnimating',
-    get: function get() {
-      return this[_IS_ANIMATING_PROP];
+      return this._distinct;
     }
 
     // --- allValidChars ---
@@ -326,15 +322,15 @@ var OKBlock = function () {
   }, {
     key: 'allValidChars',
     get: function get() {
-      return Object.keys(this[_PATTERN_PROP]._formationTable);
+      return Object.keys(this.patternDefinition._formationTable);
     }
   }], [{
     key: 'define',
-    value: function define(name, obj) {
-      if (!('_DEFAULT_OPTIONS' in obj) || !('_BASE_DOM' in obj) || !('_TRANSITION_PROPS' in obj) || !('_formationTable' in obj)) {
+    value: function define(name, patternDefinition) {
+      if (!('_DEFAULT_OPTIONS' in patternDefinition) || !('_BASE_DOM' in patternDefinition) || !('_TRANSITION_PROPS' in patternDefinition) || !('_formationTable' in patternDefinition) || !('_Class' in patternDefinition)) {
         console.error('Pattern is invalid.');
       }
-      patterns[name] = obj;
+      this.patterns[name] = patternDefinition;
     }
   }]);
 
@@ -342,19 +338,19 @@ var OKBlock = function () {
 }();
 
 function _createDom() {
-  return this[_PATTERN_PROP]._BASE_DOM.cloneNode(true);
+  return this.patternDefinition._BASE_DOM.cloneNode(true);
 }
 
 function _changeStyle(c) {
   // @bind this
-  var oldC = this[_CHAR_PROP];
-  var oldFormation = this[_PATTERN_PROP]._formationTable[oldC];
-  var newFormation = this[_PATTERN_PROP]._formationTable[c];
+  var oldC = this.char;
+  var newFormation = this.patternDefinition._formationTable[c];
   if (!newFormation) {
     return;
   }
   var diffFormation = void 0;
   if (oldC) {
+    var oldFormation = this.patternDefinition._formationTable[oldC];
     diffFormation = newFormation.map(function (newStr, idx) {
       var oldStr = oldFormation[idx];
       var newStrIsArr = Array.isArray(newStr);
@@ -373,19 +369,23 @@ function _changeStyle(c) {
   } else {
     diffFormation = newFormation;
   }
-  [].concat(_toConsumableArray(this[_DOM_PROP].childNodes)).forEach(function (node, idx) {
+  [].concat(_toConsumableArray(this.dom.childNodes)).forEach(function (node, idx) {
+    if (!(node instanceof HTMLElement)) {
+      return;
+    }
     var formation = diffFormation[idx];
-    var specifyPos = Array.isArray(formation);
     if (!formation) {
       return;
     }
     var pos = void 0;
-    if (specifyPos) {
+    if (Array.isArray(formation)) {
       pos = formation[1];
+      var _formation = formation[0];
+      node.className = _formation + ' ' + pos;
     } else {
-      pos = 'pos_' + idx % 3 + '_' + (idx / 3 | 0);
+      pos = _FORMATION_POS_TABLE[idx + (idx / 3 | 0)];
+      node.className = formation + ' ' + pos;
     }
-    node.className = (specifyPos ? formation[0] : formation) + ' ' + pos;
     if (node.classList.contains('rotate-default')) {
       return;
     }
@@ -397,49 +397,58 @@ function _updateTransitionConfig() {
   var _this2 = this;
 
   // @bind this
-  var val = this[_PATTERN_PROP]._TRANSITION_PROPS.reduce(function (str, prop, idx) {
-    return '' + str + (idx ? ',' : '') + ' ' + prop + ' ' + _this2[_DURATION_PROP] + 'ms ' + _this2[_EASING_PROP];
-  }, '');
+  var val = this.patternDefinition._TRANSITION_PROPS.map(function (prop) {
+    return prop + ' ' + _this2._duration + 'ms ' + _this2._eaasing;
+  }).join(',');
 
-  _updateStyle(this[_DOM_PROP].childNodes);
+  _updateStyle(this.dom.childNodes);
 
   function _updateStyle(list) {
     [].concat(_toConsumableArray(list)).forEach(function (node) {
-      node.style.transition = val;
-      if (node.firstChild) {
-        _updateStyle(node.childNodes);
+      if (node instanceof HTMLElement) {
+        node.style.transition = val;
+        if (node.firstChild) {
+          _updateStyle(node.childNodes);
+        }
+      } else {
+        // $FlowFixMe
+        console.error('node must be HTMLElement. ' + node);
       }
     });
   }
 }
 
-var _ROTATE_TABLE = ['rotate0', 'rotate90', 'rotate180', 'rotate270'];
+OKBlock.patterns = {}; // initialized in OKBlock.define
 
-module.exports = OKBlock;
-},{"xtend":4}],2:[function(require,module,exports){
+
+var _ROTATE_TABLE = ['rotate0', 'rotate90', 'rotate180', 'rotate270'];
+var _FORMATION_POS_TABLE = ['pos_0_0', 'pos_1_0', 'pos_2_0', 'pos_3_0', 'pos_0_1', 'pos_1_1', 'pos_2_1', 'pos_3_1', 'pos_0_2', 'pos_1_2', 'pos_2_2', 'pos_3_2'];
+
+exports.default = OKBlock;
+},{}],2:[function(require,module,exports){
 'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _OKBlock = require('./OKBlock.js');
+
+var _OKBlock2 = _interopRequireDefault(_OKBlock);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var OKBlock = require('./OKBlock.js');
-
-var _EMBLEMS_PROP = Symbol();
-var _DISPLAY_TIME_PROP = Symbol();
-var _IS_ANIMATING_PROP = Symbol();
-var _RESUME_PROP = Symbol();
-var _LOOP_PROP = Symbol();
-var _RANDOM_PROP = Symbol();
-var _CANSELLER_PROP = Symbol();
-
 var OKBlocksGroup = function () {
   function OKBlocksGroup(chars) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { pattern: null };
 
     _classCallCheck(this, OKBlocksGroup);
 
@@ -450,35 +459,41 @@ var OKBlocksGroup = function () {
         _options$random = options.random,
         random = _options$random === undefined ? false : _options$random;
 
-    this[_IS_ANIMATING_PROP] = false;
-    this[_RESUME_PROP] = null;
-    this[_CANSELLER_PROP] = function () {};
+    this.isAnimating = false;
+    this.resumeAnimation = null;
+    this.cancelAnimation = function () {};
 
     // --- options ---
-    this.displayTime = displayTime | 0 || 1500;
+    if (displayTime && typeof displayTime === 'number') {
+      this.displayTime = displayTime | 0;
+    } else {
+      this.displayTime = 1500;
+    }
     this.loop = loop;
     this.random = random;
 
     if (typeof chars === 'string') {
-      if (typeof length !== 'number' || chars.length < length) {
-        for (var i = chars.length; i < length; i++) {
-          chars += ' ';
+      if (typeof length === 'number') {
+        if (chars.length < length) {
+          for (var i = chars.length; i < length; i++) {
+            chars += ' ';
+          }
+        } else if (chars.length > length) {
+          chars = chars.slice(0, length);
         }
-      } else if (length != null && chars.length > length) {
-        chars = chars.slice(0, length);
       }
     } else {
-      console.error('OKBlocksGroup constructor first argument should be string.');
+      throw new Error('OKBlocksGroup constructor first argument should be string.');
     }
 
     delete options.loop;
     delete options.displayTime;
     delete options.random;
 
-    var emblems = _transformToOKBlockArray(chars, options);
+    var blocks = _transformToOKBlockArray(chars, options);
 
-    if (emblems) {
-      this[_EMBLEMS_PROP] = emblems;
+    if (blocks) {
+      this.blocks = blocks;
     } else {
       throw new Error('OKBlocksGroup arguments expect string or array of OKBlock.');
     }
@@ -487,14 +502,14 @@ var OKBlocksGroup = function () {
   _createClass(OKBlocksGroup, [{
     key: 'toString',
     value: function toString() {
-      return this.emblems.map(function (e) {
+      return this.blocks.map(function (e) {
         return e.char;
       }).join('');
     }
   }, {
     key: 'map',
     value: function map(str) {
-      this.emblems.forEach(function (emblem, idx) {
+      this.blocks.forEach(function (emblem, idx) {
         var c = str[idx];
         if (!c) {
           c = ' ';
@@ -505,7 +520,7 @@ var OKBlocksGroup = function () {
   }, {
     key: 'appendTo',
     value: function appendTo(parent) {
-      var frag = this.emblems.reduce(function (f, e) {
+      var frag = this.blocks.reduce(function (f, e) {
         f.appendChild(e.dom);
         return f;
       }, document.createDocumentFragment());
@@ -514,20 +529,22 @@ var OKBlocksGroup = function () {
   }, {
     key: 'stopAnimate',
     value: function stopAnimate() {
-      this[_IS_ANIMATING_PROP] = false;
+      this.isAnimating = false;
     }
   }, {
     key: 'resumeAnimate',
     value: function resumeAnimate() {
-      this[_IS_ANIMATING_PROP] = true;
-      this[_RESUME_PROP]();
+      if (typeof this.resumeAnimation === 'function') {
+        this.isAnimating = true;
+        this.resumeAnimation();
+      }
     }
   }, {
     key: 'animateFromString',
     value: function animateFromString(str, opt) {
       var strArr = void 0;
       if (typeof str === 'string') {
-        var len = this.emblems.length;
+        var len = this.blocks.length;
         strArr = [].concat(_toConsumableArray(str)).reduce(function (arr, s, idx) {
           if (idx % len === 0) {
             arr.push('');
@@ -541,6 +558,7 @@ var OKBlocksGroup = function () {
         strArr = str;
       } else {
         console.error('OKBlocksGroup#animateFromString first argument should be string or array of string.');
+        return;
       }
 
       _animateFromStringArray.call(this, strArr, opt);
@@ -561,8 +579,39 @@ var OKBlocksGroup = function () {
     key: 'options',
     set: function set() {
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var length = options.length,
+          size = options.size,
+          displayTime = options.displayTime,
+          duration = options.duration,
+          easing = options.easing,
+          loop = options.loop,
+          random = options.random,
+          distinct = options.distinct;
 
-      Object.assign(this, options);
+      if (length != null) {
+        this.length = length;
+      }
+      if (size != null) {
+        this.size = size;
+      }
+      if (displayTime != null) {
+        this.displayTime = displayTime;
+      }
+      if (duration != null) {
+        this.duration = duration;
+      }
+      if (easing != null) {
+        this.easing = easing;
+      }
+      if (loop != null) {
+        this.loop = loop;
+      }
+      if (random != null) {
+        this.random = random;
+      }
+      if (distinct != null) {
+        this.distinct = distinct;
+      }
     },
     get: function get() {
       var length = this.length,
@@ -572,9 +621,9 @@ var OKBlocksGroup = function () {
           size = this.size,
           duration = this.duration,
           easing = this.easing,
-          pedal = this.pedal;
+          distinct = this.distinct;
 
-      return { length: length, displayTime: displayTime, loop: loop, random: random, size: size, duration: duration, easing: easing, pedal: pedal };
+      return { length: length, displayTime: displayTime, loop: loop, random: random, size: size, duration: duration, easing: easing, distinct: distinct };
     }
 
     // --- length ---
@@ -585,20 +634,20 @@ var OKBlocksGroup = function () {
       if (lenNew == null) {
         return;
       }
-      var emblems = this[_EMBLEMS_PROP];
-      var lenOld = emblems.length;
+      var blocks = this.blocks;
+      var lenOld = blocks.length;
 
       if (lenNew > lenOld) {
         var blankArr = Array.from({ length: lenNew - lenOld }, function () {
-          return new OKBlock(' ', { pattern: emblems.slice(-1)[0].pattern });
+          return _OKBlock2.default.factory(' ', { pattern: blocks.slice(-1)[0].pattern });
         });
-        this[_EMBLEMS_PROP] = emblems.concat(blankArr);
+        this.blocks = blocks.concat(blankArr);
       } else if (lenNew < lenOld) {
-        this[_EMBLEMS_PROP] = emblems.slice(0, lenNew);
+        this.blocks = blocks.slice(0, lenNew);
       }
     },
     get: function get() {
-      return this[_EMBLEMS_PROP].length;
+      return this.blocks.length;
     }
 
     // --- displayTime ---
@@ -610,13 +659,13 @@ var OKBlocksGroup = function () {
         return;
       }
       if (typeof time === 'number' && time > 0) {
-        this[_DISPLAY_TIME_PROP] = time;
+        this._displayTime = time;
       } else {
         console.error('OKBlocksGroup.displayTime should be positive number.');
       }
     },
     get: function get() {
-      return this[_DISPLAY_TIME_PROP];
+      return this._displayTime;
     }
 
     // --- loop ---
@@ -627,10 +676,10 @@ var OKBlocksGroup = function () {
       if (bool == null) {
         return;
       }
-      this[_LOOP_PROP] = bool;
+      this._loop = bool;
     },
     get: function get() {
-      return this[_LOOP_PROP];
+      return this._loop;
     }
 
     // --- random ---
@@ -641,10 +690,10 @@ var OKBlocksGroup = function () {
       if (bool == null) {
         return;
       }
-      this[_RANDOM_PROP] = bool;
+      this._random = bool;
     },
     get: function get() {
-      return this[_RANDOM_PROP];
+      return this._random;
     }
 
     // --- size ---
@@ -652,12 +701,12 @@ var OKBlocksGroup = function () {
   }, {
     key: 'size',
     set: function set(size) {
-      this[_EMBLEMS_PROP].forEach(function (emb) {
+      this.blocks.forEach(function (emb) {
         return emb.size = size;
       });
     },
     get: function get() {
-      return this[_EMBLEMS_PROP].map(function (emb) {
+      return this.blocks.map(function (emb) {
         return emb.size;
       });
     }
@@ -667,12 +716,12 @@ var OKBlocksGroup = function () {
   }, {
     key: 'duration',
     set: function set(time) {
-      this[_EMBLEMS_PROP].forEach(function (emb) {
+      this.blocks.forEach(function (emb) {
         return emb.duration = time;
       });
     },
     get: function get() {
-      return this[_EMBLEMS_PROP].map(function (emb) {
+      return this.blocks.map(function (emb) {
         return emb.duration;
       });
     }
@@ -682,45 +731,29 @@ var OKBlocksGroup = function () {
   }, {
     key: 'easing',
     set: function set(val) {
-      this[_EMBLEMS_PROP].forEach(function (emb) {
+      this.blocks.forEach(function (emb) {
         return emb.easing = val;
       });
     },
     get: function get() {
-      return this[_EMBLEMS_PROP].map(function (emb) {
+      return this.blocks.map(function (emb) {
         return emb.easing;
       });
     }
 
-    // --- pedal ---
+    // --- distinct ---
 
   }, {
-    key: 'pedal',
+    key: 'distinct',
     set: function set(val) {
-      this[_EMBLEMS_PROP].forEach(function (emb) {
-        return emb.pedal = val;
+      this.blocks.forEach(function (emb) {
+        return emb.distinct = val;
       });
     },
     get: function get() {
-      return this[_EMBLEMS_PROP].map(function (emb) {
-        return emb.pedal;
+      return this.blocks.map(function (emb) {
+        return emb.distinct;
       });
-    }
-
-    // --- emblems ---
-
-  }, {
-    key: 'emblems',
-    get: function get() {
-      return this[_EMBLEMS_PROP];
-    }
-
-    // --- isAnimating ---
-
-  }, {
-    key: 'isAnimating',
-    get: function get() {
-      return this[_IS_ANIMATING_PROP];
     }
   }]);
 
@@ -728,18 +761,17 @@ var OKBlocksGroup = function () {
 }();
 
 function _transformToOKBlockArray(arg, opt) {
-  // (string | [OKBlock], object) => [OKBlock] | false
 
   var res = void 0;
   switch (typeof arg === 'undefined' ? 'undefined' : _typeof(arg)) {
     case 'string':
       res = [].concat(_toConsumableArray(arg)).map(function (c) {
-        return new OKBlock(c, opt);
+        return _OKBlock2.default.factory(c, opt);
       });
       break;
     case 'object':
       if (Array.isArray(arg) && arg.every(function (o) {
-        return o instanceof OKBlock;
+        return o instanceof _OKBlock2.default;
       })) {
         res = arg;
       } else {
@@ -753,21 +785,23 @@ function _transformToOKBlockArray(arg, opt) {
   return res;
 }
 
-function _animateFromStringArray(strArr, opt) {
+function _animateFromStringArray(strArr) {
   var _this = this;
 
-  this[_CANSELLER_PROP](); // cansel before animation.
+  var opt = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-  this[_IS_ANIMATING_PROP] = true;
-  this[_RESUME_PROP] = null;
+  this.cancelAnimation(); // cansel before animation.
+
+  this.isAnimating = true;
+  this.resumeAnimation = null;
   this.options = opt;
 
   strArr.reduce(function (p, s, idx) {
     var isLast = idx === strArr.length - 1;
     return p.then(function () {
       return new Promise(function (resolve, reject) {
-        _this[_CANSELLER_PROP] = reject;
-        if (_this[_RANDOM_PROP]) {
+        _this.cancelAnimation = reject;
+        if (_this.random) {
           var _s = strArr[Math.random() * strArr.length | 0];
           _this.map(_s);
         } else {
@@ -780,55 +814,54 @@ function _animateFromStringArray(strArr, opt) {
               _animateFromStringArray.call(_this, strArr);
             }, _this.displayTime);
           } else {
-            _this[_IS_ANIMATING_PROP] = false;
+            _this.isAnimating = false;
           }
           return;
         }
-        if (!_this[_IS_ANIMATING_PROP]) {
-          _this[_RESUME_PROP] = resolve;
+        if (!_this.isAnimating) {
+          _this.resumeAnimation = resolve;
         } else {
           setTimeout(resolve, _this.displayTime);
         }
       });
     });
   }, Promise.resolve()).catch(function (err) {
-    _this[_IS_ANIMATING_PROP] = false;
+    _this.isAnimating = false;
     console.log('OKBlocksGroup: cansel before animation.');
     console.log(err);
   });
 }
 
-module.exports = OKBlocksGroup;
-},{"./OKBlock.js":1}],3:[function(require,module,exports){
+exports.default = OKBlocksGroup;
+},{"./OKBlock.js":1}],"@all-user/ok-blocks":[function(require,module,exports){
 'use strict';
 
-module.exports.OKBlock = require('./OKBlock.js');
-module.exports.OKBlocksGroup = require('./OKBlocksGroup.js');
-},{"./OKBlock.js":1,"./OKBlocksGroup.js":2}],4:[function(require,module,exports){
-module.exports = extend
+var _OKBlock = require('./OKBlock.js');
 
-var hasOwnProperty = Object.prototype.hasOwnProperty;
+var _OKBlock2 = _interopRequireDefault(_OKBlock);
 
-function extend() {
-    var target = {}
+var _OKBlocksGroup = require('./OKBlocksGroup.js');
 
-    for (var i = 0; i < arguments.length; i++) {
-        var source = arguments[i]
+var _OKBlocksGroup2 = _interopRequireDefault(_OKBlocksGroup);
 
-        for (var key in source) {
-            if (hasOwnProperty.call(source, key)) {
-                target[key] = source[key]
-            }
-        }
-    }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-    return target
-}
-
-},{}],5:[function(require,module,exports){
+module.exports = {
+  OKBlock: _OKBlock2.default,
+  OKBlocksGroup: _OKBlocksGroup2.default
+};
+},{"./OKBlock.js":1,"./OKBlocksGroup.js":2}],"@all-user/ok-patterns-lines":[function(require,module,exports){
 'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 /*
  * default options
@@ -860,9 +893,9 @@ var _BASE_DOM = function () {
   // div.whitebox-wrapper > div.whitebox * 4
   var _arr = [0, 1, 2, 3];
   for (var _i = 0; _i < _arr.length; _i++) {
-    var _i2 = _arr[_i];
+    var i = _arr[_i];
     var whiteBox = whiteBoxBase.cloneNode();
-    whiteBox.className = 'whitebox pos_' + _i2;
+    whiteBox.className = 'whitebox pos_' + i;
     whiteBoxWrapper.appendChild(whiteBox);
   }
 
@@ -870,9 +903,9 @@ var _BASE_DOM = function () {
 
   // in emmet syntax.
   // div.wrapper > div.part * 9
-  for (var i = 0; i < 9; i++) {
+  for (var _i2 = 0; _i2 < 9; _i2++) {
     var _part = part.cloneNode(true);
-    _part.classList.add('pos_' + i % 3 + '_' + (i / 3 | 0));
+    _part.classList.add('pos_' + _i2 % 3 + '_' + (_i2 / 3 | 0));
     docFrag.appendChild(_part);
   }
   wrapper.appendChild(docFrag);
@@ -1011,77 +1044,91 @@ var _formationTable = {
  */
 var _TRANSITION_PROPS = ['width', 'height', 'background-color', 'border-radius'];
 
-module.exports = function (OKBlock) {
-  OKBlock.define('Lines', { _DEFAULT_OPTIONS: _DEFAULT_OPTIONS, _BASE_DOM: _BASE_DOM, _TRANSITION_PROPS: _TRANSITION_PROPS, _formationTable: _formationTable });
-
+module.exports = function (OKBlockBase) {
   /*
    * advanced properties
    */
 
-  var WEIGHT_PROP = Symbol();
-  var WEIGHT_LIMIT_PROP = Symbol();
+  var ExtendedByLinesPattern = function (_OKBlockBase) {
+    _inherits(ExtendedByLinesPattern, _OKBlockBase);
 
-  Object.defineProperty(OKBlock.prototype, 'weight', {
-    get: function get() {
-      return this[WEIGHT_PROP];
-    },
-    set: function set(n) {
-      if (n > this[WEIGHT_LIMIT_PROP] || n < 0) {
-        return;
+    function ExtendedByLinesPattern(c, options) {
+      _classCallCheck(this, ExtendedByLinesPattern);
+
+      var _this = _possibleConstructorReturn(this, (ExtendedByLinesPattern.__proto__ || Object.getPrototypeOf(ExtendedByLinesPattern)).call(this, c, options));
+
+      _this._weight = 3;
+      return _this;
+    }
+
+    _createClass(ExtendedByLinesPattern, [{
+      key: 'bolder',
+      value: function bolder() {
+        this.weight = this._weight + 1;
       }
-      if (this[WEIGHT_PROP] === n) {
-        return;
+    }, {
+      key: 'lighter',
+      value: function lighter() {
+        this.weight = this._weight - 1;
       }
-      this.dom.classList.add('weight_' + n);
-      this.dom.classList.remove('weight_' + this[WEIGHT_PROP]);
-      this[WEIGHT_PROP] = n;
-    }
-  });
+    }, {
+      key: 'weight',
+      get: function get() {
+        return this._weight;
+      },
+      set: function set(n) {
+        if (n > this.constructor.WEIGHT_LIMIT || n < 0) {
+          return;
+        }
+        if (this._weight === n) {
+          return;
+        }
+        this.dom.classList.add('weight_' + n);
+        this.dom.classList.remove('weight_' + this._weight);
+        this._weight = n;
+      }
+    }, {
+      key: 'lineColor',
+      get: function get() {
+        return this._lineColor;
+      },
+      set: function set(color) {
+        [].concat(_toConsumableArray(this.dom.querySelectorAll('.part'))).forEach(function (p) {
+          p.style.backgroundColor = color;
+        });
+        this._lineColor = color;
+      }
+    }, {
+      key: 'paddingColor',
+      get: function get() {
+        return this._paddingColor;
+      },
+      set: function set(color) {
+        [].concat(_toConsumableArray(this.dom.querySelectorAll('.whitebox'))).forEach(function (p) {
+          p.style.backgroundColor = color;
+        });
+        this._paddingColor = color;
+      }
+    }]);
 
-  OKBlock.prototype.bolder = function () {
-    this.weight = this[WEIGHT_PROP] + 1;
-  };
+    return ExtendedByLinesPattern;
+  }(OKBlockBase);
 
-  OKBlock.prototype.lighter = function () {
-    this.weight = this[WEIGHT_PROP] - 1;
-  };
+  ExtendedByLinesPattern.WEIGHT_LIMIT = 6;
 
-  OKBlock.prototype[WEIGHT_PROP] = 3;
+  var definition = { _DEFAULT_OPTIONS: _DEFAULT_OPTIONS, _BASE_DOM: _BASE_DOM, _TRANSITION_PROPS: _TRANSITION_PROPS, _formationTable: _formationTable, _Class: ExtendedByLinesPattern };
+  OKBlockBase.define('Lines', definition);
 
-  Object.defineProperty(OKBlock.prototype, WEIGHT_LIMIT_PROP, {
-    value: 6
-  });
-
-  var LINE_COLOR_PROP = Symbol();
-  var PAD_COLOR_PROP = Symbol();
-  Object.defineProperty(OKBlock.prototype, 'lineColor', {
-    get: function get() {
-      return this[LINE_COLOR_PROP];
-    },
-    set: function set(color) {
-      [].concat(_toConsumableArray(this.dom.querySelectorAll('.part'))).forEach(function (p) {
-        p.style.backgroundColor = color;
-      });
-      this[LINE_COLOR_PROP] = color;
-    }
-  });
-
-  Object.defineProperty(OKBlock.prototype, 'paddingColor', {
-    get: function get() {
-      return this[PAD_COLOR_PROP];
-    },
-    set: function set(color) {
-      [].concat(_toConsumableArray(this.dom.querySelectorAll('.whitebox'))).forEach(function (p) {
-        p.style.backgroundColor = color;
-      });
-      this[PAD_COLOR_PROP] = color;
-    }
-  });
-
-  return OKBlock;
+  return ExtendedByLinesPattern;
 };
-},{}],6:[function(require,module,exports){
+},{}],"@all-user/ok-patterns-olympic2020":[function(require,module,exports){
 'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 /*
  * default options
@@ -1200,15 +1247,31 @@ var _formationTable = {
  */
 var _TRANSITION_PROPS = ['top', 'left', 'background-color', 'border-radius'];
 
-module.exports = function (OKBlock) {
-  OKBlock.define('Olympic2020', { _DEFAULT_OPTIONS: _DEFAULT_OPTIONS, _BASE_DOM: _BASE_DOM, _TRANSITION_PROPS: _TRANSITION_PROPS, _formationTable: _formationTable });
-  return OKBlock;
-};
-},{}],"@all-user/ok-blocks":[function(require,module,exports){
-module.exports = require('./lib');
+module.exports = function (OKBlockBase) {
+  var ExtendedByOlympic2020Pattern = function (_OKBlockBase) {
+    _inherits(ExtendedByOlympic2020Pattern, _OKBlockBase);
 
-},{"./lib":3}],"@all-user/ok-patterns-lines":[function(require,module,exports){
-arguments[4]["@all-user/ok-blocks"][0].apply(exports,arguments)
-},{"./lib":5,"dup":"@all-user/ok-blocks"}],"@all-user/ok-patterns-olympic2020":[function(require,module,exports){
-arguments[4]["@all-user/ok-blocks"][0].apply(exports,arguments)
-},{"./lib":6,"dup":"@all-user/ok-blocks"}]},{},[]);
+    function ExtendedByOlympic2020Pattern() {
+      _classCallCheck(this, ExtendedByOlympic2020Pattern);
+
+      return _possibleConstructorReturn(this, (ExtendedByOlympic2020Pattern.__proto__ || Object.getPrototypeOf(ExtendedByOlympic2020Pattern)).apply(this, arguments));
+    }
+
+    return ExtendedByOlympic2020Pattern;
+  }(OKBlockBase);
+
+  var definition = { _DEFAULT_OPTIONS: _DEFAULT_OPTIONS, _BASE_DOM: _BASE_DOM, _TRANSITION_PROPS: _TRANSITION_PROPS, _formationTable: _formationTable, _Class: ExtendedByOlympic2020Pattern };
+  OKBlockBase.define('Olympic2020', definition);
+  return function (_OKBlockBase2) {
+    _inherits(_class, _OKBlockBase2);
+
+    function _class() {
+      _classCallCheck(this, _class);
+
+      return _possibleConstructorReturn(this, (_class.__proto__ || Object.getPrototypeOf(_class)).apply(this, arguments));
+    }
+
+    return _class;
+  }(OKBlockBase);
+};
+},{}]},{},[]);

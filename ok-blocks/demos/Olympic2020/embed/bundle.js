@@ -3,9 +3,8 @@
 
 var _embed_helper = require('./helpers/embed_helper.js');
 
-var _require = require('@all-user/ok-blocks');
-
-var OKBlock = _require.OKBlock;
+var _require = require('@all-user/ok-blocks'),
+    OKBlock = _require.OKBlock;
 
 require('@all-user/ok-patterns-olympic2020')(OKBlock);
 
@@ -25,6 +24,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var LONG_COPY = 'olympicparalympicgame';
   var COPYS = [TITLE_COPY, LONG_COPY, SHORT_COPY, BLANK_COPY, '1234567890    ', BLANK_COPY, DATE_COPY, 'happy  day!', BLANK_COPY, 'hello  world!!'];
 
+  if (messageInput == null) {
+    throw new Error('#message is not found.');
+  }
+  messageInput.textContent = COPYS.join('\n');
+
+  if (wrapper == null) {
+    throw new Error('#wrapper is not found.');
+  }
   var params = {
     pattern: PATTERN,
     vertical: 3,
@@ -33,40 +40,52 @@ document.addEventListener('DOMContentLoaded', function () {
     duration: 1000,
     msg: COPYS
   };
-
-  messageInput.textContent = COPYS.join('\n');
-
   (0, _embed_helper.clickButtonHandler)(params, wrapper);
 
+  if (genButton == null) {
+    throw new Error('#generate-button is not found.');
+  }
   genButton.addEventListener('click', function () {
     var options = (0, _embed_helper.getInputValues)();
     options.pattern = PATTERN;
     (0, _embed_helper.clickButtonHandler)(options, wrapper);
-    scroll(0, 0);
+    window.scroll(0, 0);
   });
 
+  if (codeButton == null) {
+    throw new Error('#embed-button is not found.');
+  }
   codeButton.addEventListener('click', function () {
     var embedCode = genEmbedCode();
+    if (embedOutput == null) {
+      throw new Error('#embed-output is not found');
+    }
+    if (!(embedOutput instanceof HTMLInputElement)) {
+      console.error('#embed-output sould be HTMLInputElement.');
+      return;
+    }
     embedOutput.value = embedCode;
   });
 });
 
 function genEmbedCode() {
-  var _getInputValues = (0, _embed_helper.getInputValues)();
+  var _getInputValues = (0, _embed_helper.getInputValues)(),
+      width = _getInputValues.width,
+      height = _getInputValues.height,
+      vertical = _getInputValues.vertical,
+      horizon = _getInputValues.horizon,
+      display = _getInputValues.display,
+      duration = _getInputValues.duration,
+      msg = _getInputValues.msg;
 
-  var width = _getInputValues.width;
-  var height = _getInputValues.height;
-  var vertical = _getInputValues.vertical;
-  var horizon = _getInputValues.horizon;
-  var display = _getInputValues.display;
-  var duration = _getInputValues.duration;
-  var msg = _getInputValues.msg;
-
+  if (typeof width !== 'string' || typeof height !== 'string') {
+    throw new Error('height and width should be css string(e.g., 100vw).');
+  }
   return '<iframe style="width:' + width + ';height:' + height + ';border:none;" src="https://all-user.github.io/ok-blocks/demos/Olympic2020/embed_response/index.html?vertical=' + vertical + '&horizon=' + horizon + '&display=' + display + '&duration=' + duration + '&msg=' + fixedEncodeURIComponent(msg) + '&pattern=' + PATTERN + '"></iframe>';
 }
 
 function fixedEncodeURIComponent(str) {
-  return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
+  return encodeURIComponent(str.join(',')).replace(/[!'()*]/g, function (c) {
     return '%' + c.charCodeAt(0).toString(16);
   });
 }
@@ -78,8 +97,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 function computedStyles() {
-  var WIDTH = +getComputedStyle(document.querySelector('.container')).width.replace('px', '');
-  var PADDING = +getComputedStyle(document.querySelector('.container')).paddingLeft.replace('px', '');
+  var container = document.querySelector('.container');
+  if (container == null) {
+    throw new Error('.container is not found.');
+  }
+  var Styles = getComputedStyle(container);
+  var WIDTH = +Styles.width.replace('px', '');
+  var PADDING = +Styles.paddingLeft.replace('px', '');
   var SIZE = WIDTH - PADDING * 2;
 
   return { WIDTH: WIDTH, PADDING: PADDING, SIZE: SIZE };
@@ -95,14 +119,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getInputValues = exports.clickButtonHandler = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _computed_styles = require('./computed_styles.js');
 
-var _require = require('@all-user/ok-blocks');
-
-var OKBlocksGroup = _require.OKBlocksGroup;
-
+var _require = require('@all-user/ok-blocks'),
+    OKBlocksGroup = _require.OKBlocksGroup;
 
 var forms = {};
 
@@ -153,27 +175,20 @@ function clickButtonHandler(params, wrapper) {
 
   setTimeout(function () {
     group.animateFromString(params.msg, { loop: true });
-  }, group.emblems[0].displayTime);
+  }, group.blocks[0].displayTime);
 }
 
 function generateSignboard(params) {
   // object => OKBlocksGroup
+  var _computedStyles = (0, _computed_styles.computedStyles)(),
+      SIZE = _computedStyles.SIZE;
 
-  var _computedStyles = (0, _computed_styles.computedStyles)();
-
-  var SIZE = _computedStyles.SIZE;
-
-
-  if (!(typeof params === 'undefined' ? 'undefined' : _typeof(params)) === 'object') {
-    return;
-  }
-
-  var pattern = params.pattern;
-  var vertical = params.vertical;
-  var horizon = params.horizon;
-  var display = params.display;
-  var duration = params.duration;
-  var msg = params.msg;
+  var pattern = params.pattern,
+      vertical = params.vertical,
+      horizon = params.horizon,
+      display = params.display,
+      duration = params.duration,
+      msg = params.msg;
 
 
   vertical = vertical || 3;
@@ -184,7 +199,7 @@ function generateSignboard(params) {
 
   var group = new OKBlocksGroup(msg[0], { pattern: pattern, length: vertical * horizon, size: emblemSize, displayTime: display, duration: duration });
 
-  group.emblems.forEach(function (e) {
+  group.blocks.forEach(function (e) {
     e.dom.style.margin = margin + 'px';
   });
 

@@ -3,9 +3,8 @@
 
 var _embed_helper = require('./helpers/embed_helper.js');
 
-var _require = require('@all-user/ok-blocks');
-
-var OKBlock = _require.OKBlock;
+var _require = require('@all-user/ok-blocks'),
+    OKBlock = _require.OKBlock;
 
 require('@all-user/ok-patterns-lines')(OKBlock);
 
@@ -20,7 +19,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   params.msg = params.msg.split(',');
 
-  (0, _embed_helper.clickButtonHandler)(params, document.querySelector('#wrapper'));
+  var wrapper = document.querySelector('#wrapper');
+  if (wrapper == null) {
+    throw new Error('#wrapper is not found.');
+  }
+  if (typeof params.display !== 'number') {
+    params.display = 0;
+  }
+  if (typeof params.duration !== 'number') {
+    params.duration = 0;
+  }
+  if (typeof params.vertical !== 'number') {
+    params.vertical = 0;
+  }
+  if (typeof params.horizon !== 'number') {
+    params.horizon = 0;
+  }
+  (0, _embed_helper.clickButtonHandler)(params, wrapper);
 });
 
 },{"./helpers/embed_helper.js":3,"@all-user/ok-blocks":"@all-user/ok-blocks","@all-user/ok-patterns-lines":"@all-user/ok-patterns-lines"}],2:[function(require,module,exports){
@@ -30,8 +45,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 function computedStyles() {
-  var WIDTH = +getComputedStyle(document.querySelector('.container')).width.replace('px', '');
-  var PADDING = +getComputedStyle(document.querySelector('.container')).paddingLeft.replace('px', '');
+  var container = document.querySelector('.container');
+  if (container == null) {
+    throw new Error('.container is not found.');
+  }
+  var Styles = getComputedStyle(container);
+  var WIDTH = +Styles.width.replace('px', '');
+  var PADDING = +Styles.paddingLeft.replace('px', '');
   var SIZE = WIDTH - PADDING * 2;
 
   return { WIDTH: WIDTH, PADDING: PADDING, SIZE: SIZE };
@@ -47,14 +67,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getInputValues = exports.clickButtonHandler = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _computed_styles = require('./computed_styles.js');
 
-var _require = require('@all-user/ok-blocks');
-
-var OKBlocksGroup = _require.OKBlocksGroup;
-
+var _require = require('@all-user/ok-blocks'),
+    OKBlocksGroup = _require.OKBlocksGroup;
 
 var UP_KEY = 75;
 var DOWN_KEY = 74;
@@ -92,7 +110,6 @@ function clickButtonHandler(params, wrapper) {
   while (wrapper.firstChild) {
     wrapper.removeChild(wrapper.firstChild);
   }
-
   var group = generateSignboard(params);
   group.appendTo(wrapper);
 
@@ -109,13 +126,13 @@ function clickButtonHandler(params, wrapper) {
   document.addEventListener('keydown', function (e) {
     switch (e.keyCode) {
       case UP_KEY:
-        group.emblems.forEach(function (emb) {
-          emb.bolder();
+        group.blocks.forEach(function (emb) {
+          return emb.bolder();
         });
         break;
       case DOWN_KEY:
-        group.emblems.forEach(function (emb) {
-          emb.lighter();
+        group.blocks.forEach(function (emb) {
+          return emb.lighter();
         });
         break;
     }
@@ -123,27 +140,20 @@ function clickButtonHandler(params, wrapper) {
 
   setTimeout(function () {
     group.animateFromString(msg, { loop: true });
-  }, group.emblems[0].displayTime);
+  }, group.blocks[0].displayTime);
 }
 
 function generateSignboard(params) {
   // object => OKBlocksGroup
+  var _computedStyles = (0, _computed_styles.computedStyles)(),
+      SIZE = _computedStyles.SIZE;
 
-  var _computedStyles = (0, _computed_styles.computedStyles)();
-
-  var SIZE = _computedStyles.SIZE;
-
-
-  if ((typeof params === 'undefined' ? 'undefined' : _typeof(params)) !== 'object') {
-    return;
-  }
-
-  var pattern = params.pattern;
-  var vertical = params.vertical;
-  var horizon = params.horizon;
-  var display = params.display;
-  var duration = params.duration;
-  var msg = params.msg;
+  var pattern = params.pattern,
+      vertical = params.vertical,
+      horizon = params.horizon,
+      display = params.display,
+      duration = params.duration,
+      msg = params.msg;
 
 
   vertical = vertical || 3;
@@ -154,7 +164,7 @@ function generateSignboard(params) {
 
   var group = new OKBlocksGroup(msg[0], { pattern: pattern, length: vertical * horizon, size: emblemSize, displayTime: display, duration: duration });
 
-  group.emblems.forEach(function (e) {
+  group.blocks.forEach(function (e) {
     e.dom.style.margin = margin + 'px';
   });
 

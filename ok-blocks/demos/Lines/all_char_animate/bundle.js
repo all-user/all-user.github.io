@@ -3,9 +3,8 @@
 
 var _computed_styles = require('./helpers/computed_styles.js');
 
-var _require = require('@all-user/ok-blocks');
-
-var OKBlock = _require.OKBlock;
+var _require = require('@all-user/ok-blocks'),
+    OKBlock = _require.OKBlock;
 
 require('@all-user/ok-patterns-lines')(OKBlock);
 
@@ -13,23 +12,22 @@ document.addEventListener('DOMContentLoaded', function () {
   var wrapper = document.querySelector('#wrapper');
   var olms = [];
 
-  var _computedStyles = (0, _computed_styles.computedStyles)();
-
-  var SIZE = _computedStyles.SIZE;
+  var _computedStyles = (0, _computed_styles.computedStyles)(),
+      SIZE = _computedStyles.SIZE;
 
   var size = SIZE > 500 ? 500 : SIZE;
   var MARGIN = size / 15;
   var sizeL = size - MARGIN * 2;
   var sizeS = MARGIN * 3;
 
-  olms.push(new OKBlock('a', { pattern: 'Lines', size: sizeS, displayTime: 3111, random: true }));
-  olms.push(new OKBlock('z', { pattern: 'Lines', size: sizeS, displayTime: 6399, random: true }));
-  olms.push(new OKBlock('t', { pattern: 'Lines', size: sizeS, displayTime: 1477, random: true }));
+  olms.push(OKBlock.factory('a', { pattern: 'Lines', size: sizeS, displayTime: 3111, random: true }));
+  olms.push(OKBlock.factory('z', { pattern: 'Lines', size: sizeS, displayTime: 6399, random: true }));
+  olms.push(OKBlock.factory('t', { pattern: 'Lines', size: sizeS, displayTime: 1477, random: true }));
   olms.forEach(function (e) {
     e.dom.style.margin = MARGIN + 'px';
   });
 
-  var bigOKBlock = new OKBlock('/', { pattern: 'Lines', size: sizeL, displayTime: 1000, duration: 200 });
+  var bigOKBlock = OKBlock.factory('/', { pattern: 'Lines', size: sizeL, displayTime: 1000, duration: 200 });
   bigOKBlock.dom.style.margin = MARGIN + 'px';
   olms.push(bigOKBlock);
 
@@ -40,10 +38,15 @@ document.addEventListener('DOMContentLoaded', function () {
       if (olm.isAnimating) {
         olm.stopAnimate.call(olm);
       } else {
-        olm.resumeAnimate.call(olm);
+        if (olm.resumeAnimate) {
+          olm.resumeAnimate.call(olm);
+        }
       }
     });
 
+    if (wrapper == null) {
+      throw new Error('#wrapper is not found.');
+    }
     wrapper.appendChild(olm.dom);
 
     setTimeout(function () {
@@ -59,8 +62,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 function computedStyles() {
-  var WIDTH = +getComputedStyle(document.querySelector('.container')).width.replace('px', '');
-  var PADDING = +getComputedStyle(document.querySelector('.container')).paddingLeft.replace('px', '');
+  var container = document.querySelector('.container');
+  if (container == null) {
+    throw new Error('.container is not found.');
+  }
+  var Styles = getComputedStyle(container);
+  var WIDTH = +Styles.width.replace('px', '');
+  var PADDING = +Styles.paddingLeft.replace('px', '');
   var SIZE = WIDTH - PADDING * 2;
 
   return { WIDTH: WIDTH, PADDING: PADDING, SIZE: SIZE };

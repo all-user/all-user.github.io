@@ -5,18 +5,16 @@ var _computed_styles = require('./helpers/computed_styles.js');
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var _require = require('@all-user/ok-blocks');
-
-var OKBlock = _require.OKBlock;
+var _require = require('@all-user/ok-blocks'),
+    OKBlock = _require.OKBlock;
 
 require('@all-user/ok-patterns-lines')(OKBlock);
 
 document.addEventListener('DOMContentLoaded', function () {
   var wrapper = document.querySelector('#wrapper');
 
-  var _computedStyles = (0, _computed_styles.computedStyles)();
-
-  var SIZE = _computedStyles.SIZE;
+  var _computedStyles = (0, _computed_styles.computedStyles)(),
+      SIZE = _computedStyles.SIZE;
 
   var size = SIZE > 675 ? 675 : SIZE;
   var MARGIN = size / 5;
@@ -24,21 +22,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var init = 't';
   var olms = [];
-  olms.push(new OKBlock(init[0], { pattern: 'Lines', size: sizeS }));
-  //     olms.push(new OKBlock(init[1], { pattern: 'Lines', size: sizeS }));
-  //     olms.push(new OKBlock(init[2], { pattern: 'Lines', size: sizeS }));
-  //     olms.push(new OKBlock(init[3], { pattern: 'Lines', size: sizeS }));
+  olms.push(OKBlock.factory(init[0], { pattern: 'Lines', size: sizeS }));
+  //     olms.push(OKBlock.factory(init[1], { pattern: 'Lines', size: sizeS }));
+  //     olms.push(OKBlock.factory(init[2], { pattern: 'Lines', size: sizeS }));
+  //     olms.push(OKBlock.factory(init[3], { pattern: 'Lines', size: sizeS }));
   olms.forEach(function (e) {
     e.dom.style.margin = MARGIN + 'px auto';
   });
-
-  var input = document.querySelector('#user-input');
-
   olms.forEach(function (olm) {
+    if (wrapper == null) {
+      throw new Error('#wrapper is not found.');
+    }
     wrapper.appendChild(olm.dom);
   });
 
+  var input = document.querySelector('#user-input');
+  if (input == null) {
+    throw new Error('#user-input is not found.');
+  }
   input.addEventListener('input', function (e) {
+    if (e.target !== input) {
+      console.error('event.target is not equal #user-input.');
+      return;
+    }
+    if (e.target instanceof HTMLInputElement) {
+      e.target;
+    } else {
+      return;
+    }
     var str = (init + e.target.value).slice(-init.length);
     [].concat(_toConsumableArray(str)).forEach(function (c, idx) {
       olms[idx].to(c);
@@ -53,8 +64,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 function computedStyles() {
-  var WIDTH = +getComputedStyle(document.querySelector('.container')).width.replace('px', '');
-  var PADDING = +getComputedStyle(document.querySelector('.container')).paddingLeft.replace('px', '');
+  var container = document.querySelector('.container');
+  if (container == null) {
+    throw new Error('.container is not found.');
+  }
+  var Styles = getComputedStyle(container);
+  var WIDTH = +Styles.width.replace('px', '');
+  var PADDING = +Styles.paddingLeft.replace('px', '');
   var SIZE = WIDTH - PADDING * 2;
 
   return { WIDTH: WIDTH, PADDING: PADDING, SIZE: SIZE };

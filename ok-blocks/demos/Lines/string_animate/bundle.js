@@ -5,8 +5,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 function computedStyles() {
-  var WIDTH = +getComputedStyle(document.querySelector('.container')).width.replace('px', '');
-  var PADDING = +getComputedStyle(document.querySelector('.container')).paddingLeft.replace('px', '');
+  var container = document.querySelector('.container');
+  if (container == null) {
+    throw new Error('.container is not found.');
+  }
+  var Styles = getComputedStyle(container);
+  var WIDTH = +Styles.width.replace('px', '');
+  var PADDING = +Styles.paddingLeft.replace('px', '');
   var SIZE = WIDTH - PADDING * 2;
 
   return { WIDTH: WIDTH, PADDING: PADDING, SIZE: SIZE };
@@ -19,19 +24,17 @@ exports.computedStyles = computedStyles;
 
 var _computed_styles = require('./helpers/computed_styles.js');
 
-var _require = require('@all-user/ok-blocks');
-
-var OKBlock = _require.OKBlock;
-var OKBlocksGroup = _require.OKBlocksGroup;
+var _require = require('@all-user/ok-blocks'),
+    OKBlock = _require.OKBlock,
+    OKBlocksGroup = _require.OKBlocksGroup;
 
 require('@all-user/ok-patterns-lines')(OKBlock);
 
 document.addEventListener('DOMContentLoaded', function () {
   var wrapper = document.querySelector('#wrapper');
 
-  var _computedStyles = (0, _computed_styles.computedStyles)();
-
-  var SIZE = _computedStyles.SIZE;
+  var _computedStyles = (0, _computed_styles.computedStyles)(),
+      SIZE = _computedStyles.SIZE;
 
   var MARGIN = SIZE / 35;
   var EMBLEM_SIZE = MARGIN * 3;
@@ -44,10 +47,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var group = new OKBlocksGroup(TITLE_COPY, { pattern: 'Lines', length: 21, size: EMBLEM_SIZE, displayTime: 1500 });
 
-  group.emblems.forEach(function (e) {
+  group.blocks.forEach(function (e) {
     e.dom.style.margin = MARGIN + 'px';
   });
 
+  if (wrapper == null) {
+    throw new Error('#wrapper is not found.');
+  }
   group.appendTo(wrapper);
 
   wrapper.addEventListener('click', function () {
