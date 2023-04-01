@@ -1,0 +1,79 @@
+@import '../../stylus/skeu.styl'
+
+$params = json('../../stylus/themes/pink/theme.json', { hash: true })
+$params.material.shadow_length = 0px
+$params.material.active_depth = 1px
+
+stylus-skeuomorphic($params)
+
+bg_color = $params.material.bg_color
+#stylus-skeu-2-background
+  size 100% auto
+  margin 0
+  padding 100px 0
+  position relative
+  text-align center
+  overflow-x scroll
+  background-color bg_color
+
+#stylus-skeu-2-wrapper
+  display inline-block
+  size 100.5% auto
+  padding 0
+  margin auto
+  position relative
+
+chain-all = skeu-pink.chain-all
+.stylus-skeu-2-pink
+  { chain-all }
+  color black
+
+chain-right-all = skeu-pink.chain-right-all
+.stylus-skeu-2-pink:nth-child(1)
+  { chain-right-all }
+  color black
+
+chain-left-all = skeu-pink.chain-left-all
+.stylus-skeu-2-pink:nth-last-child(1)
+  { chain-left-all }
+  color black
+
+.stylus-skeu-2-pink.stylus-skeu-2-skeu
+  box-sizing border-box
+  display inline-block
+  size 80px auto
+  font-size 20px
+  line-height 20px
+  padding 20px 0
+  margin 0
+  border-right 1px solid #555
+
+.stylus-skeu-2-pink.stylus-skeu-2-skeu:nth-last-child(1)
+  border-right none
+
+isolate-active = skeu-pink.isolate.active
+#stylus-skeu-2-rec-input
+  display none
+  & + #stylus-skeu-2-rec
+    color #c50
+    &:active
+      top 2px
+  &:checked + #stylus-skeu-2-rec
+    { isolate-active }
+    top 1px
+    color #f50
+  &:checked + #stylus-skeu-2-rec:active
+    top 2px
+
+#stylus-skeu-2-play-input
+  display none
+  & + #stylus-skeu-2-play
+    color #58a
+    &:active
+      top 2px
+  &:checked + #stylus-skeu-2-play
+    { isolate-active }
+    top 1px
+    color #0a9
+  &:checked + #stylus-skeu-2-play:active
+    top 2px

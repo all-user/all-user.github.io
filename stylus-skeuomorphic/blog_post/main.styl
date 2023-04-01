@@ -1,0 +1,343 @@
+@import '../../stylus/skeu.styl'
+
+no_deco()
+  & > a
+    color inherit
+    box-shadow none
+    transition inherit
+
+sizer($material)
+  bg_color = $material.bg_color
+  background-color bg_color
+  position relative
+  display block
+  box-sizing border-box
+  width 100%
+  overflow-x scroll
+  min-height 100vh
+
+wrapper($material)
+  bg_color = $material.bg_color
+  background-color bg_color
+  position relative
+  display block
+  box-sizing border-box
+  width 100.5%
+  height auto
+  padding 2em 20px
+  text-align center
+
+fig-01()
+  font-size 40px
+  line-height 60px
+  font-family 'League Script', cursive
+  font-weight normal
+  letter-spacing 0
+  text-align center
+  padding 13px 0 7px 0
+  box-sizing border-box
+  display inline-block
+  position relative
+  size 220px auto
+  margin 5px 0
+
+fig-02()
+  circle()
+  position relative
+  display inline-block
+  text-align center
+  size 200px 200px
+  box-sizing border-box
+  padding 0
+  margin 20px
+  .txt
+    display inline-block
+    absolute top 0 left 0 bottom 0 right 0
+    margin auto
+    padding 0
+    font-family 'Luckiest Guy'
+    font-size 80px
+    line-height 140px
+    size 100% 120px
+    font-weight normal
+    text-transform uppercase
+    letter-spacing 0
+
+
+fig-03()
+  font-size 20px
+  line-height 1.4em
+  font-family sans-serif
+  padding 1em
+  text-align left
+  box-sizing border-box
+  display block
+  size auto auto
+  margin auto
+
+
+gray-params = json('../../stylus/themes/gray/theme.json', { hash: true })
+stylus-skeuomorphic(gray-params)
+gray-normal = skeu-gray.isolate.normal
+gray-hover = skeu-gray.isolate.hover
+gray-active = skeu-gray.isolate.active
+.gray-sizer
+  sizer(gray-params.material)
+  .gray-wrapper
+    wrapper(gray-params.material)
+    & .fig-01
+      { gray-normal }
+      no_deco()
+      fig-01()
+      &.demo:hover
+      &.hover
+        { gray-hover }
+      &.demo:active
+      &.active
+        { gray-active }
+    & .fig-02
+      { gray-normal }
+      no_deco()
+      fig-02()
+      &.demo:hover
+        { gray-hover }
+      &.demo:active
+        { gray-active }
+    & .fig-03
+      { gray-normal }
+      no_deco()
+      fig-03()
+      &.demo:hover
+        { gray-hover }
+      &.demo:active
+        { gray-active }
+
+pink-params = json('../../stylus/themes/pink/theme.json', { hash: true })
+stylus-skeuomorphic(pink-params)
+pink-normal = skeu-pink.isolate.normal
+pink-hover = skeu-pink.isolate.hover
+pink-active = skeu-pink.isolate.active
+.pink-sizer
+  sizer(pink-params.material)
+  .pink-wrapper
+    wrapper(pink-params.material)
+    & .fig-01
+      { pink-normal }
+      no_deco()
+      fig-01()
+      &.demo:hover
+      &.hover
+        { pink-hover }
+      &.demo:active
+      &.active
+        { pink-active }
+    & .fig-02
+      { pink-normal }
+      no_deco()
+      fig-02()
+      &.demo:hover
+        { pink-hover }
+      &.demo:active
+        { pink-active }
+    & .fig-03
+      { pink-normal }
+      no_deco()
+      fig-03()
+      &.demo:hover
+        { pink-hover }
+      &.demo:active
+        { pink-active }
+
+purple-params = json('../../stylus/themes/purple/theme.json', { hash: true })
+purple-params.material.texture.type = 'image'
+purple-params.material.texture.size = '300px 300px'
+purple-params.material.texture.src = 'http://all-user.org/images/memowomome/css-skeu/pattern.png'
+stylus-skeuomorphic(purple-params)
+purple-normal = skeu-purple.isolate.normal
+purple-hover = skeu-purple.isolate.hover
+purple-active = skeu-purple.isolate.active
+
+.purple-sizer
+  sizer(purple-params.material)
+  .purple-wrapper
+    wrapper(purple-params.material)
+    & .fig-01
+      { purple-normal }
+      no_deco()
+      fig-01()
+      &.demo:hover
+      &.hover
+        { purple-hover }
+      &.demo:active
+      &.active
+        { purple-active }
+    & .fig-02
+      { purple-normal }
+      no_deco()
+      fig-02()
+      &.demo:hover
+        { purple-hover }
+      &.demo:active
+        { purple-active }
+    & .fig-03
+      { purple-normal }
+      no_deco()
+      fig-03()
+      &.demo:hover
+        { purple-hover }
+      &.demo:active
+        { purple-active }
+
+
+yellow-params = json('../../stylus/themes/yellow/theme.json', { hash: true })
+yellow-params.material.texture.type = 'image'
+yellow-params.material.texture.size = 'auto'
+yellow-params.material.texture.src = 'http://all-user.org/images/memowomome/css-skeu/canvas.png'
+stylus-skeuomorphic(yellow-params)
+yellow-normal = skeu-yellow.isolate.normal
+yellow-hover = skeu-yellow.isolate.hover
+yellow-active = skeu-yellow.isolate.active
+
+.yellow-sizer
+  sizer(yellow-params.material)
+  .yellow-wrapper
+    wrapper(yellow-params.material)
+    & .fig-01
+      { yellow-normal }
+      no_deco()
+      fig-01()
+      &.demo:hover
+      &.hover
+        { yellow-hover }
+      &.demo:active
+      &.active
+        { yellow-active }
+    & .fig-02
+      { yellow-normal }
+      no_deco()
+      fig-02()
+      &.demo:hover
+        { yellow-hover }
+      &.demo:active
+        { yellow-active }
+    & .fig-03
+      { yellow-normal }
+      no_deco()
+      fig-03()
+      &.demo:hover
+        { yellow-hover }
+      &.demo:active
+        { yellow-active }
+
+
+green-params = json('../../stylus/themes/green/theme.json', { hash: true })
+stylus-skeuomorphic(green-params)
+green-normal = skeu-green.isolate.normal
+green-hover = skeu-green.isolate.hover
+green-active = skeu-green.isolate.active
+
+.green-sizer
+  sizer(green-params.material)
+  .green-wrapper
+    wrapper(green-params.material)
+    & .fig-01
+      { green-normal }
+      no_deco()
+      fig-01()
+      &.demo:hover
+      &.hover
+        { green-hover }
+      &.demo:active
+      &.active
+        { green-active }
+    & .fig-02
+      { green-normal }
+      no_deco()
+      fig-02()
+      &.demo:hover
+        { green-hover }
+      &.demo:active
+        { green-active }
+    & .fig-03
+      { green-normal }
+      no_deco()
+      fig-03()
+      &.demo:hover
+        { green-hover }
+      &.demo:active
+        { green-active }
+
+
+blue-params = json('../../stylus/themes/blue/theme.json', { hash: true })
+stylus-skeuomorphic(blue-params)
+blue-normal = skeu-blue.isolate.normal
+blue-hover = skeu-blue.isolate.hover
+blue-active = skeu-blue.isolate.active
+
+.blue-sizer
+  sizer(blue-params.material)
+  .blue-wrapper
+    wrapper(blue-params.material)
+    & .fig-01
+      { blue-normal }
+      no_deco()
+      fig-01()
+      &.demo:hover
+      &.hover
+        { blue-hover }
+      &.demo:active
+      &.active
+        { blue-active }
+    & .fig-02
+      { blue-normal }
+      no_deco()
+      fig-02()
+      &.demo:hover
+        { blue-hover }
+      &.demo:active
+        { blue-active }
+    & .fig-03
+      { blue-normal }
+      no_deco()
+      fig-03()
+      &.demo:hover
+        { blue-hover }
+      &.demo:active
+        { blue-active }
+
+red-params = json('../../stylus/themes/red/theme.json', { hash: true })
+stylus-skeuomorphic(red-params)
+red-normal = skeu-red.isolate.normal
+red-hover = skeu-red.isolate.hover
+red-active = skeu-red.isolate.active
+
+.red-sizer
+  sizer(red-params.material)
+  .red-wrapper
+    wrapper(red-params.material)
+    & .fig-01
+      { red-normal }
+      no_deco()
+      fig-01()
+      &.demo:hover
+      &.hover
+        { red-hover }
+      &.demo:active
+      &.active
+        { red-active }
+    & .fig-02
+      { red-normal }
+      no_deco()
+      fig-02()
+      &.demo:hover
+        { red-hover }
+      &.demo:active
+        { red-active }
+    & .fig-03
+      { red-normal }
+      no_deco()
+      fig-03()
+      &.demo:hover
+        { red-hover }
+      &.demo:active
+        { red-active }

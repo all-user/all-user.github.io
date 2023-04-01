@@ -1,0 +1,47 @@
+@import '../../stylus/skeu.styl'
+$params = json('../../stylus/themes/purple/theme.json', { hash: true })
+stylus-skeuomorphic($params)
+
+body-attrs =$params.material.bg_color
+body
+  background-color body-attrs
+
+isolate-all = skeu-purple.isolate-all
+
+.fig-01
+  { isolate-all }
+  font-size 50px
+  font-family 'League Script', cursive
+  font-weight normal
+  letter-spacing .1em
+  text-align center
+  padding 30px 50px
+  box-sizing border-box
+  display inline-block
+  size auto auto
+  margin 150px 0
+  border-radius 8px
+
+.fig-02
+  { isolate-all }
+  circle()
+  font-size 150px
+  line-height 150px
+  font-family 'Copperplate'
+  text-align center
+  size 300px 300px
+  box-sizing border-box
+  padding 70px 0 0
+  margin auto
+
+.fig-03
+  { isolate-all }
+  font-size 50px
+  font-family 'Copperplate'
+  letter-spacing .2em
+  text-align center
+  padding 100px 0
+  box-sizing border-box
+  display block
+  size 60% 100%
+  margin 150px auto
